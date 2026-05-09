@@ -1,0 +1,50 @@
+[
+  {
+    "workload": "Workload A (50% R, 50% U)",
+    "throughput": 212283.83439619394,
+    "avg_latency": 0.0027721643447875975,
+    "p50_latency": 0.0,
+    "p95_latency": 0.0,
+    "p99_latency": 0.0
+  },
+  {
+    "workload": "Workload B (95% R, 5% U)",
+    "throughput": 227082.46708246708,
+    "avg_latency": 0.002945423126220703,
+    "p50_latency": 0.0,
+    "p95_latency": 0.0,
+    "p99_latency": 0.0
+  },
+  {
+    "workload": "Workload C (100% R)",
+    "throughput": 72522.65087906159,
+    "avg_latency": 0.013298583030700684,
+    "p50_latency": 0.0,
+    "p95_latency": 0.0,
+    "p99_latency": 0.9970712661743165
+  },
+  {
+    "workload": "Workload D (95% R, 5% I)",
+    "throughput": 258851.72956460025,
+    "avg_latency": 0.002713298797607422,
+    "p50_latency": 0.0,
+    "p95_latency": 0.0,
+    "p99_latency": 0.0
+  },
+  {
+    "workload": "Workload E (95% Scan, 5% I)",
+    "throughput": 9517.702574063758,
+    "avg_latency": 0.10308976173400879,
+    "p50_latency": 0.0,
+    "p95_latency": 0.9999275207519531,
+    "p99_latency": 1.0948419570922856
+  },
+  {
+    "workload": "Workload F (RMW)",
+    "throughput": 283547.39813077793,
+    "avg_latency": 0.0024036288261413572,
+    "p50_latency": 0.0,
+    "p95_latency": 0.0,
+    "p99_latency": 0.0
+  }
+]

@@ -1,0 +1,103 @@
+# Local Python environments and caches
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+wheelhouse/
+
+# Local environment / secrets
+.env
+.env.*
+!.env.example
+
+# C/C++ build outputs
+build/
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dll
+*.dylib
+*.exe
+*.pdb
+*.ilk
+
+# Benchmark/profiling scratch outputs
+*.cachegrind
+*.perf.data
+*.prof
+*.gcda
+*.gcno
+profiling/tmp/
+profiling/cache/
+
+# LaTeX generated intermediates
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.xdv
+
+# Keep source PDFs and generated paper figures, but ignore final local builds
+paper-final/main.pdf
+paper-final/*.aux
+paper-final/*.bbl
+paper-final/*.blg
+paper-final/*.log
+paper-final/*.out
+paper-final/*.toc
+paper-final/*.synctex.gz
+
+# Editor and OS noise
+.vscode/*
+!.vscode/tasks.json
+!.vscode/settings.json
+!.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.orig
+
+# Local databases / checkpoints
+*.db
+*.sqlite
+*.sqlite3
+*.ckpt
+
+# Large downloaded third-party source trees or build drops
+integration/postgresql/postgresql-*/
+
+# Research artifacts intentionally kept:
+# - results/**/*.csv, results/**/*.md
+# - results/figures/*.pdf
+# - paper-final/figures/*.pdf
+# - paper/tables/*.tex
+# - data/*.csv

@@ -1,0 +1,17 @@
+{
+    "files.associations": {
+        "*.h": "cpp",
+        "*.cpp": "cpp"
+    },
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4,
+    "C_Cpp.default.cppStandard": "c++11",
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/include"
+    ],
+    "files.exclude": {
+        "**/*.o": true,
+        "**/*.exe": true,
+        "build/": true
+    }
+}

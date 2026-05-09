@@ -1,0 +1,41 @@
+[
+  {
+    "workload": "Workload A (50% R, 50% U)",
+    "algorithm": "baseline",
+    "throughput": 276475.81506334624,
+    "avg_latency": 0.002345108985900879,
+    "p50_latency": 0.0,
+    "p95_latency": 0.0,
+    "p99_latency": 0.0,
+    "total_ops": 10000,
+    "duration": 0.03616952896118164,
+    "cache_hit_rate": 0.0,
+    "final_fanout": 64
+  },
+  {
+    "workload": "Workload B (95% R, 5% U)",
+    "algorithm": "baseline",
+    "throughput": 250669.59910114508,
+    "avg_latency": 0.0028004169464111326,
+    "p50_latency": 0.0,
+    "p95_latency": 0.0,
+    "p99_latency": 0.0,
+    "total_ops": 10000,
+    "duration": 0.039893150329589844,
+    "cache_hit_rate": 0.0,
+    "final_fanout": 64
+  },
+  {
+    "workload": "Workload C (100% R)",
+    "algorithm": "baseline",
+    "throughput": 72125.20054820809,
+    "avg_latency": 0.013664793968200684,
+    "p50_latency": 0.0,
+    "p95_latency": 0.0,
+    "p99_latency": 0.99945068359375,
+    "total_ops": 10000,
+    "duration": 0.13864779472351074,
+    "cache_hit_rate": 0.0,
+    "final_fanout": 64
+  }
+]

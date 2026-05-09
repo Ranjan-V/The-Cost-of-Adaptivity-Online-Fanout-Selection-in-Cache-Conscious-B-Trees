@@ -1,0 +1,122 @@
+[
+  {
+    "workload": "Workload A",
+    "algorithm": "baseline",
+    "throughput": 10618.375546797844,
+    "avg_latency": 0.09417636394500732,
+    "cache_hit_rate": 0.0,
+    "final_fanout": 64,
+    "total_ops": 10000,
+    "duration": 0.9417636394500732
+  },
+  {
+    "workload": "Workload B",
+    "algorithm": "baseline",
+    "throughput": 11601.589252739204,
+    "avg_latency": 0.08619508743286132,
+    "cache_hit_rate": 0.0,
+    "final_fanout": 64,
+    "total_ops": 10000,
+    "duration": 0.8619508743286133
+  },
+  {
+    "workload": "Workload C",
+    "algorithm": "baseline",
+    "throughput": 116341.04261090986,
+    "avg_latency": 0.008595418930053712,
+    "cache_hit_rate": 0.0,
+    "final_fanout": 64,
+    "total_ops": 10000,
+    "duration": 0.08595418930053711
+  },
+  {
+    "workload": "Workload A",
+    "algorithm": "regression",
+    "throughput": 10699.804233794952,
+    "avg_latency": 0.09345965385437012,
+    "cache_hit_rate": 0.4734,
+    "final_fanout": 128,
+    "total_ops": 10000,
+    "duration": 0.9345965385437012
+  },
+  {
+    "workload": "Workload B",
+    "algorithm": "regression",
+    "throughput": 10800.945078574141,
+    "avg_latency": 0.09258449077606201,
+    "cache_hit_rate": 0.447,
+    "final_fanout": 128,
+    "total_ops": 10000,
+    "duration": 0.9258449077606201
+  },
+  {
+    "workload": "Workload C",
+    "algorithm": "regression",
+    "throughput": 62582.03038156754,
+    "avg_latency": 0.01597902774810791,
+    "cache_hit_rate": 0.4406,
+    "final_fanout": 128,
+    "total_ops": 10000,
+    "duration": 0.1597902774810791
+  },
+  {
+    "workload": "Workload A",
+    "algorithm": "qlearning",
+    "throughput": 10726.884268018657,
+    "avg_latency": 0.0932237148284912,
+    "cache_hit_rate": 0.4827,
+    "final_fanout": 128,
+    "total_ops": 10000,
+    "duration": 0.9322371482849121
+  },
+  {
+    "workload": "Workload B",
+    "algorithm": "qlearning",
+    "throughput": 10733.37081466624,
+    "avg_latency": 0.09316737651824951,
+    "cache_hit_rate": 0.4418,
+    "final_fanout": 128,
+    "total_ops": 10000,
+    "duration": 0.9316737651824951
+  },
+  {
+    "workload": "Workload C",
+    "algorithm": "qlearning",
+    "throughput": 63959.10817516267,
+    "avg_latency": 0.015634989738464354,
+    "cache_hit_rate": 0.4337,
+    "final_fanout": 128,
+    "total_ops": 10000,
+    "duration": 0.15634989738464355
+  },
+  {
+    "workload": "Workload A",
+    "algorithm": "aco",
+    "throughput": 10796.007568497815,
+    "avg_latency": 0.09262683391571046,
+    "cache_hit_rate": 0.4574,
+    "final_fanout": 128,
+    "total_ops": 10000,
+    "duration": 0.9262683391571045
+  },
+  {
+    "workload": "Workload B",
+    "algorithm": "aco",
+    "throughput": 11103.071335901273,
+    "avg_latency": 0.09006516933441162,
+    "cache_hit_rate": 0.4519,
+    "final_fanout": 128,
+    "total_ops": 10000,
+    "duration": 0.9006516933441162
+  },
+  {
+    "workload": "Workload C",
+    "algorithm": "aco",
+    "throughput": 69489.97985367406,
+    "avg_latency": 0.01439056396484375,
+    "cache_hit_rate": 0.4415,
+    "final_fanout": 128,
+    "total_ops": 10000,
+    "duration": 0.1439056396484375
+  }
+]

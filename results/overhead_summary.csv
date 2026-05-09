@@ -1,0 +1,22 @@
+workload,index,operations,run_ms,throughput_ops_sec,p95_sample_us,final_fanout,adaptations,restructures,monitored_nodes,skipped_hysteresis,skipped_cost,skipped_cooldown
+Uniform-B,Static B+Tree,100000,16.5704,6.03486e+006,0.3,64,0,0,0,0,0,0
+Uniform-B,Static Region,100000,15.0022,6.66569e+006,0.3,64,0,0,0,0,0,0
+Uniform-B,Static Region + Monitor,100000,16.17,6.18429e+006,0.3,64,0,0,6091,0,0,0
+Uniform-B,Segmented No Records,100000,16.3812,6.10456e+006,0.3,64,0,0,0,0,0,0
+Uniform-B,Segmented Records Only,100000,20.2058,4.94907e+006,0.5,64,0,0,0,0,0,0
+Uniform-B,Segmented Monitor + Records,100000,19.1549,5.2206e+006,0.4,64,0,0,6091,0,0,0
+Uniform-B,Segmented Full Adaptive,100000,21.7198,4.60409e+006,0.4,64,16,0,3071,8,8,0
+Zipf-B,Static B+Tree,100000,12.4006,8.06413e+006,0.3,64,0,0,0,0,0,0
+Zipf-B,Static Region,100000,12.8368,7.7901e+006,0.3,64,0,0,0,0,0,0
+Zipf-B,Static Region + Monitor,100000,14.9631,6.68311e+006,0.4,64,0,0,4782,0,0,0
+Zipf-B,Segmented No Records,100000,13.2609,7.54097e+006,0.3,64,0,0,0,0,0,0
+Zipf-B,Segmented Records Only,100000,13.0713,7.65035e+006,0.3,64,0,0,0,0,0,0
+Zipf-B,Segmented Monitor + Records,100000,14.116,7.08416e+006,0.4,64,0,0,4782,0,0,0
+Zipf-B,Segmented Full Adaptive,100000,18.9898,5.26598e+006,0.4,60,9,1,1726,3,1,0
+Zipf-A,Static B+Tree,100000,15.9872,6.255e+006,0.3,64,0,0,0,0,0,0
+Zipf-A,Static Region,100000,18.2462,5.48059e+006,0.4,64,0,0,0,0,0,0
+Zipf-A,Static Region + Monitor,100000,20.0403,4.98995e+006,0.4,64,0,0,4751,0,0,0
+Zipf-A,Segmented No Records,100000,21.3195,4.69054e+006,0.4,64,0,0,0,0,0,0
+Zipf-A,Segmented Records Only,100000,19.1228,5.22936e+006,0.4,64,0,0,0,0,0,0
+Zipf-A,Segmented Monitor + Records,100000,20.9434,4.77477e+006,0.4,64,0,0,4751,0,0,0
+Zipf-A,Segmented Full Adaptive,100000,27.6119,3.62163e+006,0.5,60,9,1,1689,3,1,0

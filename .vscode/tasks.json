@@ -1,0 +1,39 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build All",
+            "type": "shell",
+            "command": ".\\build.bat",
+            "args": ["all"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "Build Tests",
+            "type": "shell",
+            "command": ".\\build.bat",
+            "args": ["btree"]
+        },
+        {
+            "label": "Run Tests",
+            "type": "shell",
+            "command": ".\\build\\test_btree.exe",
+            "group": "test"
+        },
+        {
+            "label": "Run Algorithm Comparison",
+            "type": "shell",
+            "command": ".\\build\\bench_algorithms.exe"
+        },
+        {
+            "label": "Clean Build",
+            "type": "shell",
+            "command": ".\\build.bat",
+            "args": ["clean"]
+        }
+    ]
+}

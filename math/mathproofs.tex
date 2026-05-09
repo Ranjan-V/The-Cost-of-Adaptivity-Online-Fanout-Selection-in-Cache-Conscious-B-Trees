@@ -1,0 +1,370 @@
+% Mathematical notes for the SIGMOD/VLDB paper draft.
+% These notes are intentionally written as paper-ready LaTeX fragments.
+
+\section{Theoretical Analysis}
+\label{sec:theoretical-analysis}
+
+This section formalizes the cost of online fanout adaptation.  The goal is not
+to prove that the implemented policy must outperform a tuned static index.  The
+measurements show the opposite.  Instead, the analysis identifies the
+conditions under which adaptation can be amortized and gives a conservative
+competitive upper bound for a discretized fanout-selection policy.  The same
+model also explains why the current in-memory implementation loses.
+
+\subsection{Cost Model}
+
+Let a segment contain $n_s$ keys.  A B+ tree with fanout $f$ has height
+$h_f(n_s)=\lceil \log_f n_s\rceil$.  We write the cost of one operation under
+fanout $f$ as
+\[
+  c_f(n_s) = h_f(n_s)\cdot \ell + h_f(n_s)\cdot s(f),
+\]
+where $\ell$ is the average cost of visiting a level and $s(f)$ is the
+in-node search cost.  The term $s(f)$ can be instantiated as $\Theta(f)$ for
+linear scan or $\Theta(\log f)$ for binary search.  Online adaptation pays
+additional per-operation costs:
+\[
+  \mu = m + r + p,
+\]
+where $m$ is monitoring cost, $r$ is records/metadata maintenance cost, and
+$p$ is policy-evaluation cost.  Rebuilding a segment from fanout $f$ to fanout
+$g$ has one-time cost $R(f,g,n_s)$.
+
+For a phase of $T$ operations, the gross benefit of changing from $f$ to $g$ is
+\[
+  \Delta(f,g,n_s)=c_f(n_s)-c_g(n_s).
+\]
+The net benefit is positive only when
+\[
+  T(\Delta(f,g,n_s)-\mu) > R(f,g,n_s).
+\]
+This inequality is the paper's main diagnostic condition.
+
+\subsection{Amortized Restructuring Cost}
+
+We now show that restructuring can be $O(1)$ amortized per operation if the
+algorithm performs a rebuild only after enough evidence has accumulated.
+This is the formal version of the cost gate used in the implementation.
+
+\begin{theorem}[Potential-bound restructuring]
+\label{thm:potential}
+Consider an adaptive segment that maintains a nonnegative potential $\Phi_t$.
+Each operation increases the potential by at most a constant $\gamma$, and a
+rebuild of cost $R_t$ is allowed only when $\Phi_t \ge R_t$.  When a rebuild is
+performed, the algorithm spends $R_t$ units of potential, so
+$\Phi_{t+1}\le \Phi_t + \gamma - R_t$.  Then the amortized restructuring cost
+is $O(1)$ per operation.
+\end{theorem}
+
+\begin{proof}
+Define the amortized cost of operation $t$ as
+\[
+  \hat{a}_t = a_t + \Phi_{t+1}-\Phi_t,
+\]
+where $a_t$ is the actual restructuring cost paid by the operation.  If no
+rebuild occurs, $a_t=0$ and $\Phi_{t+1}-\Phi_t\le \gamma$, hence
+$\hat{a}_t\le \gamma=O(1)$.
+
+If a rebuild occurs, $a_t=R_t$.  By the rebuild rule, the potential decreases
+by at least $R_t$ except for the new constant credit added by the current
+operation:
+\[
+  \Phi_{t+1}-\Phi_t \le \gamma - R_t .
+\]
+Therefore
+\[
+  \hat{a}_t = R_t + \Phi_{t+1}-\Phi_t
+  \le R_t + \gamma - R_t
+  = \gamma = O(1).
+\]
+Summing over any sequence of operations telescopes the potential terms:
+\[
+  \sum_t a_t \le \sum_t \hat{a}_t + \Phi_0-\Phi_T
+  \le O(T) + \Phi_0.
+\]
+With $\Phi_0=0$, total restructuring cost is $O(T)$, so the amortized
+restructuring cost is $O(1)$ per operation.
+\end{proof}
+
+\paragraph{Interpretation.}
+The theorem is intentionally conditional.  It says rebuilds can be amortized
+if the policy waits until enough potential has accumulated.  It does not say
+that adaptation is profitable, because monitoring and metadata still add
+$\mu$ to every operation.  If $\Delta(f,g,n_s)\le\mu$, then even free rebuilds
+would not make adaptation win.
+
+\subsection{Competitive Ratio}
+
+We next state a conservative competitive bound.  Let the candidate fanout set
+be a geometric ladder
+\[
+  \mathcal{F}=\{2,4,16,256,\ldots,2^{2^j}\le n\}.
+\]
+Then $|\mathcal{F}|=O(\log\log n)$.  This ladder is a theoretical device:
+the implementation uses a constant-size subset such as
+$\{8,16,32,64,128,256\}$, which only strengthens the bound in practice.
+
+Let $\mathrm{OPT}$ be an oracle that chooses the best fanout for each stable
+phase with no monitoring cost.  Let $\mathrm{A}$ be an online policy that, in
+each phase, may test fanouts in $\mathcal{F}$ but rebuilds only when the
+potential condition of Theorem~\ref{thm:potential} is satisfied.  Assume a
+regularity condition: for every fanout $f^\star$ chosen by the oracle, there
+exists a ladder fanout $f\in\mathcal{F}$ whose per-operation cost is within a
+constant factor,
+\[
+  c_f(n_s) \le \alpha c_{f^\star}(n_s),
+\]
+for a machine-dependent constant $\alpha$.  This condition holds for smooth
+cache-cost models where moving to the nearest geometric fanout changes height
+and in-node search by at most constant factors.
+
+\begin{theorem}[Discrete fanout competitiveness]
+\label{thm:competitive}
+Under the regularity condition above, and assuming the phase lengths are long
+enough for Theorem~\ref{thm:potential} to amortize rebuilds, the online
+fanout-selection policy has cost
+\[
+  \mathrm{Cost}(\mathrm{A})
+  \le O(\log\log n)\cdot \mathrm{Cost}(\mathrm{OPT})
+  + O(T\mu),
+\]
+where $T$ is the total number of operations and
+$\mu=m+r+p$ is the per-operation monitoring, records, and policy overhead.
+If $\mu$ is dominated by the oracle operation cost, this gives an
+$O(\log\log n)$ competitive ratio.
+\end{theorem}
+
+\begin{proof}
+Let $k=|\mathcal{F}|=O(\log\log n)$.  In the worst case, an online policy that
+does not know the best fanout at the start of a phase can spend one testing
+epoch on each of the $k$ candidate fanouts before selecting the best observed
+candidate.  Thus, within a phase $P$,
+\[
+  \mathrm{Cost}_P(\mathrm{A})
+  \le \sum_{f\in\mathcal{F}} T_{P,f} c_f(n_P)
+      + O(T_P\mu) + O(T_P),
+\]
+where the final $O(T_P)$ term is the amortized restructuring cost from
+Theorem~\ref{thm:potential}.  Since the testing epochs partition the phase and
+there are $k$ candidates, this is bounded by
+\[
+  \mathrm{Cost}_P(\mathrm{A})
+  \le O(k)\cdot T_P \min_{f\in\mathcal{F}} c_f(n_P)
+      + O(T_P\mu).
+\]
+By the regularity condition, the best fanout in the ladder is within a
+constant factor of the oracle's fanout:
+\[
+  \min_{f\in\mathcal{F}} c_f(n_P)
+  \le \alpha c_{f^\star_P}(n_P).
+\]
+Therefore
+\[
+  \mathrm{Cost}_P(\mathrm{A})
+  \le O(k)\cdot \mathrm{Cost}_P(\mathrm{OPT}) + O(T_P\mu).
+\]
+Summing over all phases gives
+\[
+  \mathrm{Cost}(\mathrm{A})
+  \le O(k)\cdot \mathrm{Cost}(\mathrm{OPT}) + O(T\mu).
+\]
+Since $k=O(\log\log n)$, the claimed bound follows.
+\end{proof}
+
+\paragraph{Why the bound does not contradict the measurements.}
+The theorem separates search cost from online overhead.  It gives an
+$O(\log\log n)$ multiplicative term only after adding $O(T\mu)$.  Our
+experiments show that, for in-memory workloads, $\mu$ is not negligible: it is
+often larger than the oracle fanout benefit.  Therefore the competitive bound
+is mathematically consistent with the negative empirical result.
+
+\section{Break-Even Analysis for Online Fanout Adaptation}
+\label{sec:math-break-even}
+
+\paragraph{Model.}
+Consider a key-range segment containing $N_s$ records.  A static B+ tree with
+fanout $F$ has per-operation cost
+\[
+  C(F,N_s) = H(F,N_s)\cdot(L + S(F)),
+  \qquad
+  H(F,N_s)=\left\lceil \log_F N_s \right\rceil ,
+\]
+where $L$ is the average cache/memory cost of visiting one tree level and
+$S(F)$ is the in-node search cost.  For the current implementation $S(F)$ is
+well approximated by a linear scan term $\sigma F$ for small nodes; if binary
+search is used, replace it by $\sigma \log_2 F$.  The exact form is not needed
+for the break-even theorem below; it only matters that a chosen fanout has a
+measurable per-operation cost.
+
+For a workload phase of length $T$, let the incumbent fanout be $F_0$ and the
+candidate fanout be $F_1$.  The gross per-operation benefit of changing fanout is
+\[
+  \Delta(F_0,F_1,N_s) = C(F_0,N_s)-C(F_1,N_s).
+\]
+Online adaptation also pays monitoring cost $m$, records/metadata cost $\rho$,
+policy evaluation cost $d$, and a one-time segment rebuild cost
+$R(F_0,F_1,N_s)$.  These terms are measured in the same unit as $C$, namely
+time per operation, except $R$, which is a one-time time cost.
+
+\paragraph{Lemma 1: single-phase break-even condition.}
+An online fanout change from $F_0$ to $F_1$ improves total phase time if and
+only if
+\[
+  T\cdot\left(\Delta(F_0,F_1,N_s)-m-\rho-d\right)
+  > R(F_0,F_1,N_s).
+\]
+Equivalently, when $\Delta(F_0,F_1,N_s)>m+\rho+d$, the minimum profitable phase
+length is
+\[
+  T^\star =
+  \frac{R(F_0,F_1,N_s)}
+       {\Delta(F_0,F_1,N_s)-m-\rho-d}.
+\]
+If $\Delta(F_0,F_1,N_s)\le m+\rho+d$, no finite phase length can make the
+online change profitable.
+
+\emph{Proof.}
+The static phase time is $T\cdot C(F_0,N_s)$.  The adaptive phase time is
+\[
+  T\cdot C(F_1,N_s) + T\cdot(m+\rho+d) + R(F_0,F_1,N_s).
+\]
+Adaptation is faster exactly when the second expression is smaller than the
+first.  Subtracting $T\cdot C(F_1,N_s)$ from both sides gives the stated
+inequality. $\square$
+
+\paragraph{Lemma 2: small height differences bound the available benefit.}
+For any two fanouts $F_0$ and $F_1$,
+\[
+  \Delta(F_0,F_1,N_s)
+  =
+  H(F_0,N_s)(L+S(F_0)) - H(F_1,N_s)(L+S(F_1)).
+\]
+When both fanouts give the same height, the level-cost term cancels and the
+maximum possible benefit is only the in-node difference
+$H(F_0,N_s)(S(F_0)-S(F_1))$.  In the common in-memory case where
+$N_s \le F^2$ for both choices, both trees are one or two levels deep, so the
+fanout change has little height benefit.  This is the main reason large fanouts
+often win in the measurements: reducing fanout can increase height without
+recovering enough cache locality to pay for metadata and rebuilds.
+
+\paragraph{Corollary 1: monitoring-only lower bound.}
+Even before rebuilding, a monitored segmented design cannot beat a static
+regional tree unless
+\[
+  \Delta(F_0,F_1,N_s) > m+\rho+d.
+\]
+Therefore, if the clean ablation shows that sampled monitoring and records
+metadata already cost more than the oracle fanout benefit, any online adaptive
+algorithm using the same metadata path must lose.
+
+\paragraph{Multi-phase workloads.}
+For phases $i=1,\ldots,k$, phase lengths $T_i$, segment sizes $N_i$, incumbent
+fanouts $F_i$, and chosen fanouts $G_i$, online adaptation beats a static
+baseline only if
+\[
+  \sum_{i=1}^k T_i\Delta(F_i,G_i,N_i)
+  >
+  \sum_{i=1}^k T_i(m_i+\rho_i+d_i)
+  +
+  \sum_{i=1}^k R_i .
+\]
+This is also a regret decomposition:
+\[
+  \text{Regret}
+  =
+  \sum_i T_i\left(C(G_i,N_i)-C(F_i^\star,N_i)\right)
+  +
+  \sum_i T_i(m_i+\rho_i+d_i)
+  +
+  \sum_i R_i ,
+\]
+where $F_i^\star$ is the best retrospective fanout for phase $i$.  The first
+term is policy error; the second and third terms are unavoidable overhead for
+this implementation family.
+
+\section{Measured Break-Even Calculations}
+\label{sec:measured-break-even}
+
+The following calculations convert measured throughput $X$ operations/sec into
+per-operation time $1{,}000{,}000/X$ microseconds/op.  They use the current
+five-trial YCSB summaries, the five-trial shifting trace, and the Wikipedia
+pageview trace.
+
+\paragraph{Stationary YCSB.}
+\[
+\begin{array}{lrrrr}
+\text{Workload} & \text{Static f64} & \text{Segmented Adaptive}
+& \text{Penalty} & \text{Ratio} \\
+\hline
+\text{YCSB-A} & 0.1980 & 0.2453 & 0.0473 & 0.81\times \\
+\text{YCSB-B} & 0.1369 & 0.1974 & 0.0604 & 0.69\times \\
+\text{YCSB-C} & 0.1323 & 0.1872 & 0.0549 & 0.71\times
+\end{array}
+\]
+The adaptive path adds roughly $0.047$--$0.060$ microseconds/op on these
+stationary workloads.  Since no stationary workload shows a positive gross
+benefit over the best static fanout, Lemma~1 predicts a loss.
+
+\paragraph{Shifting hot-region workload.}
+The aggregate five-trial throughput is:
+\[
+\begin{array}{lrr}
+\text{Index} & \text{Throughput} & \text{Time/op} \\
+\hline
+\text{Static B+Tree f64} & 5.588\text{M} & 0.1789 \\
+\text{Oracle Hot f32} & 6.036\text{M} & 0.1657 \\
+\text{Segmented Adaptive} & 4.904\text{M} & 0.2039
+\end{array}
+\]
+Thus the best measured oracle-hot benefit is
+\[
+  0.1789 - 0.1657 = 0.0133\ \mu s/op,
+\]
+while the adaptive implementation penalty relative to static f64 is
+\[
+  0.2039 - 0.1789 = 0.0250\ \mu s/op.
+\]
+The available oracle benefit is therefore only about half of the observed
+online penalty.  By Lemma~1, the current adaptive path cannot beat static f64 on
+this workload unless monitoring, records, policy, and rebuild overhead are cut
+by more than half or the workload phase lengths and fanout benefits become much
+larger.
+
+\paragraph{Wikipedia pageview trace.}
+On the recent Wikipedia pageview trace, aggregate throughput is:
+\[
+\begin{array}{lrr}
+\text{Index} & \text{Throughput} & \text{Time/op} \\
+\hline
+\text{Static B+Tree f64} & 10.389\text{M} & 0.0963 \\
+\text{Static B+Tree f256} & 10.419\text{M} & 0.0960 \\
+\text{Segmented Adaptive} & 8.395\text{M} & 0.1191
+\end{array}
+\]
+The best static fanout improves over f64 by only
+\[
+  0.0963 - 0.0960 = 0.0003\ \mu s/op,
+\]
+whereas the adaptive path costs
+\[
+  0.1191 - 0.0963 = 0.0229\ \mu s/op.
+\]
+The real trace therefore has almost no fanout-selection headroom at this scale;
+metadata overhead dominates.
+
+\section{Implication for the Paper}
+\label{sec:math-implication}
+
+The empirical and mathematical conclusion is not that fanout never matters.  It
+is that online fanout adaptation must satisfy a strict break-even inequality:
+\[
+  \text{fanout benefit} > \text{monitoring} + \text{metadata}
+  + \text{policy} + \frac{\text{rebuild}}{\text{phase length}}.
+\]
+The current implementation is valuable because it measures every term in this
+inequality.  If the final clean ablation continues to show that metadata and
+monitoring exceed the oracle headroom, the strongest SIGMOD-style contribution
+is a principled negative result: adaptive fanout is attractive in theory, but
+online restructuring loses unless the system can make adaptation nearly free or
+the workload has much larger, longer-lived locality shifts than standard YCSB
+and Wikipedia traces provide.
