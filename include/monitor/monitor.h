@@ -125,11 +125,10 @@ private:
 
     class SpinLock {
     private:
-        std::atomic_flag flag_;
+        std::atomic_flag flag_ = ATOMIC_FLAG_INIT;
 
     public:
-        SpinLock()
-            : flag_(ATOMIC_FLAG_INIT) {}
+        SpinLock() {}
 
         void lock() {
             while (flag_.test_and_set(std::memory_order_acquire)) {
