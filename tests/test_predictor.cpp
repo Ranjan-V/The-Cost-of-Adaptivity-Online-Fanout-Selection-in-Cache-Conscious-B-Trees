@@ -1,6 +1,5 @@
 #include "predictor/predictor.h"
 #include <iostream>
-#include <cassert>
 #include <cmath>
 #include <vector>
 

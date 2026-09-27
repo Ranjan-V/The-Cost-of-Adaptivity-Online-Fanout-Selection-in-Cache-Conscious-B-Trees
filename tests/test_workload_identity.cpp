@@ -1,8 +1,8 @@
 #include "../include/btree/btree.h"
 #include "../include/adaptive/segmented_adaptive_btree.h"
 #include "../include/adaptive/segmented_adaptive_v2.h"
+#include "test_utils.h"
 
-#include <cassert>
 #include <cstdint>
 #include <random>
 #include <utility>
@@ -68,13 +68,23 @@ int main() {
     const std::uint64_t v1_checksum = replay(v1, operations, v1_misses);
     const std::uint64_t v2_checksum = replay(v2, operations, v2_misses);
 
-    assert(fingerprint != 0);
-    assert(baseline_misses == 0 && v1_misses == 0 && v2_misses == 0);
-    assert(baseline_checksum == v1_checksum && baseline_checksum == v2_checksum);
-    assert(baseline.size() == v1.size() && baseline.size() == v2.size());
+    test_utils::require(fingerprint != 0,
+                        "seeded workload fingerprint must be nonzero");
+    test_utils::require(
+        baseline_misses == 0 && v1_misses == 0 && v2_misses == 0,
+        "STATIC, V1, and V2 must have zero lookup misses");
+    test_utils::require(
+        baseline_checksum == v1_checksum && baseline_checksum == v2_checksum,
+        "STATIC, V1, and V2 replay checksums must agree");
+    test_utils::require(
+        baseline.size() == v1.size() && baseline.size() == v2.size(),
+        "STATIC, V1, and V2 final sizes must agree");
     const std::vector<int> baseline_values = baseline.range_query(0, records - 1);
-    assert(baseline_values == v1.range_query(0, records - 1));
-    assert(baseline_values == v2.range_query(0, records - 1));
-    assert(baseline.validate_invariants());
+    test_utils::require(baseline_values == v1.range_query(0, records - 1),
+                        "STATIC and V1 final values must agree");
+    test_utils::require(baseline_values == v2.range_query(0, records - 1),
+                        "STATIC and V2 final values must agree");
+    test_utils::require(baseline.validate_invariants(),
+                        "STATIC final structural invariants must hold");
     return 0;
 }

@@ -1,6 +1,5 @@
 #include "adaptive/adaptive_btree.h"
 #include <iostream>
-#include <cassert>
 #include <ctime>
 
 using namespace cache_adaptive;

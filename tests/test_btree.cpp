@@ -1,6 +1,5 @@
 #include "../include/btree/btree.h"
 #include <iostream>
-#include <cassert>
 #include <vector>
 #include <random>
 #include <chrono>
