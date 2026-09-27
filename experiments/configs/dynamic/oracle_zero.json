@@ -1,0 +1,11 @@
+{
+  "family": "dynamic_selected_oracle",
+  "selection_status": "MEASURED_REGIONAL_SCREENING",
+  "workload_family": "shifting",
+  "records": [1000000], "operations": [1000000],
+  "phase_length": [500000], "hot_fraction": [0.2], "zipf": [1.2],
+  "sample_rate": [32], "seed": [11, 23, 37, 53, 71],
+  "variants": ["STATIC-REGIONAL"],
+  "fanout": [8, 16, 32, 64, 128, 256],
+  "repetitions": 1, "warmup": 10000
+}

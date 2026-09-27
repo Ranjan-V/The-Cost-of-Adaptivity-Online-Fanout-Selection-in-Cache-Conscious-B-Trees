@@ -59,6 +59,8 @@ profiling/cache/
 
 # Keep source PDFs and generated paper figures, but ignore final local builds
 paper-final/main.pdf
+sigmod_submission/main.pdf
+arxiv_submission_negative_result_paper/
 paper-final/*.aux
 paper-final/*.bbl
 paper-final/*.blg
@@ -85,6 +87,20 @@ desktop.ini
 *.temp
 *.bak
 *.orig
+tmp/
+.kaggle_*/
+.screening_*/
+arxiv_*_pages/
+sigmod_submission_pages/
+*_pdf_pages/
+*_pdf_text*.txt
+sigmod_*_text.txt
+paper-final/comment.cut
+sigmod_submission/main.pdf
+sigmod_submission/appendix.pdf
+kaggle_upload.zip
+artifact_source_snapshot.zip
+*.zip
 
 # Local databases / checkpoints
 *.db
@@ -101,3 +117,9 @@ integration/postgresql/postgresql-*/
 # - paper-final/figures/*.pdf
 # - paper/tables/*.tex
 # - data/*.csv
+
+# Raw/checkpointed campaigns stay in release assets or archival storage.
+# Version processed summaries, manifests, provenance, and figures instead.
+results/raw/
+results/logs/
+results_kaggle_*/

@@ -1,0 +1,11 @@
+# Unified result schema
+
+STATUS: PREPARED, NOT_RUN. Every executed run is intended to write one CSV and one `.phases.csv` sidecar. `results/raw/` is empty until manual execution.
+
+The main CSV records identity, compiler/source fingerprint, machine group, workload parameters, wall-time throughput, sampled latency statistics, monitor/policy/rebuild counters, memory estimates, checksum, misses, and workload fingerprint. `mean_sample_latency_us` is the arithmetic mean of sampled operations, not an exact all-operation mean. `peak_rss_bytes` is OS process peak (Windows working set or Linux `ru_maxrss`), which is separate from internally approximated tree/monitor/shadow bytes. `shadow_bytes` is a lower-bound pair payload estimate and omits hash-table buckets. `temp_rebuild_bytes` currently counts the exported sorted vector's capacity and omits replacement-tree allocations. `monitor_work_ms` for V2 is a 1/128 sample-based estimate and should not be treated as a hardware counter.
+
+`experiment_family` is the named campaign (for example, `dynamic_broad`), whereas the `--family` CLI input selects the generated workload (`zipf`, `uniform`, or `shifting`). These must not be interchanged during aggregation.
+
+An `UNSUPPORTED` field means unavailable, not zero. `invariant_status=NOT_CHECKED` means the timing run did not traverse and verify all B+ tree invariants; correctness tests must be run separately. `misses` should be zero for the prepared point-lookup workloads because all keys are preloaded. Matching `workload_fingerprint` proves the same operation stream; matching `checksum` is a necessary, not sufficient, semantic check.
+
+The phase sidecar contains phase operation count, phase elapsed seconds (including boundary rebuilds for perfect-detector variants), sample-rate stratum, and a phase fingerprint. The retrospective phase oracle selects the fastest measured regional-static fanout per phase, then sums those times. It is a noisy optimistic envelope over the tested layouts, not a global algorithmic upper bound, and must be checked on independent repetitions before paper claims. The executable perfect detector applies those choices to the full regional layout and charges every rebuild.

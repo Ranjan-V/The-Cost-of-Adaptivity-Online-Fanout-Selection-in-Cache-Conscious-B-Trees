@@ -1,0 +1,16 @@
+{
+  "family": "dynamic_selected_borderline",
+  "selection_status": "MEASURED_REGIONAL_SCREENING",
+  "workload_family": "shifting",
+  "records": [1000000],
+  "operations": [1000000],
+  "phase_length": [500000],
+  "hot_fraction": [0.05],
+  "zipf": [0.99],
+  "sample_rate": [16, 32, 64],
+  "seed": [11, 23, 37, 53, 71],
+  "variants": ["STATIC-REGIONAL", "ADAPT-V1", "ADAPT-V2"],
+  "fanout": [64],
+  "repetitions": 10,
+  "warmup": 10000
+}

@@ -1,0 +1,13 @@
+{
+  "family": "static_opportunity",
+  "workload_family": "zipf",
+  "records": [100000, 1000000, 5000000],
+  "operations": [1000000],
+  "zipf": [0.0, 0.8, 0.99, 1.2],
+  "read_update": [[1.0, 0.0], [0.95, 0.05], [0.5, 0.5]],
+  "fanout": [8, 16, 32, 64, 128, 256],
+  "seed": [11, 23, 37, 53, 71],
+  "variants": ["STATIC"],
+  "repetitions": 1,
+  "warmup": 10000
+}

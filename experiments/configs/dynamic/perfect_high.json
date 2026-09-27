@@ -1,0 +1,12 @@
+{
+  "family": "dynamic_perfect_high",
+  "selection_status": "MEASURED_REGIONAL_SCREENING",
+  "workload_family": "shifting",
+  "records": [1000000], "operations": [1000000],
+  "phase_length": [10000], "hot_fraction": [0.05], "zipf": [0.8],
+  "sample_rate": [32], "seed": [11, 23, 37, 53, 71],
+  "variants": ["PERFECT-V1", "PERFECT-V2"], "fanout": [64],
+  "phase_oracle_csv": "results/processed/dynamic_selected_phase_oracle.csv",
+  "phase_oracle_family": "dynamic_selected_oracle", "oracle_repetition": 0,
+  "repetitions": 10, "warmup": 10000
+}

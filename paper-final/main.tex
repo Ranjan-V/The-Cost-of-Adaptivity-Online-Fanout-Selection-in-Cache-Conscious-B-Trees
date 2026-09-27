@@ -80,6 +80,10 @@ throughput on workloads A, B, and C.  On a shifting hot-region workload,
 oracle fanout selection reaches \(1.08\times\), but segmented adaptation
 reaches \(0.92\times\).  On a Wikipedia pageview trace, static fanout
 selection has almost no headroom, while adaptation reaches \(0.81\times\).
+In a separate 1,740-run selected-regime campaign, the improved adaptive path
+reaches only \(0.881\times\)--\(0.931\times\) of its matched static-regional
+baseline even though a zero-cost phase oracle reaches
+\(1.029\times\)--\(1.041\times\).
 
 We derive a simple break-even model showing that adaptation can win only when
 per-operation fanout benefit exceeds monitoring, metadata, and policy cost,
@@ -372,6 +376,13 @@ tree, monitor, predictor, adaptive policies, segmented tree, tests, and
 benchmarks.  All reported measurements use 100K records unless otherwise
 specified.  YCSB, shifting, and overhead ablation experiments are repeated
 five times and reported with 95\% confidence intervals when summarized.
+The selected-regime validation is run separately on a four-vCPU Kaggle CPU
+instance with GCC 11.4.0, one million records, and one million measured
+operations per run.  It contains 1,740 completed runs.  For adaptive/static
+comparisons we match seed and repetition, then compute 95\% hierarchical
+bootstrap intervals by resampling the five workload seeds and the ten
+repetitions within each selected seed.  We do not pool absolute throughput
+across the Windows and Kaggle machines.
 
 \subsection{Workloads}
 
@@ -613,6 +624,68 @@ Segmented Adaptive & 2.62M & 0.63 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\subsection{Selected-Regime Validation}
+
+The preceding sliding-hotspot experiment establishes the failure mode, but a
+single trajectory cannot determine whether the result is stable across
+sampling rates and workload seeds.  We therefore use a measured static-fanout
+screening campaign to select three regimes: a long, highly skewed regime with
+little expected headroom (Zero); a long regime near the selection boundary
+(Borderline); and a rapidly changing regime with the largest measured
+headroom (High).  For each regime we evaluate Adaptive V1 and the cost-aware
+Adaptive V2 at sample rates 16, 32, and 64.  Each cohort contains five seeds
+and ten repetitions per seed.  Separate static-fanout calibration runs
+construct a retrospective, zero-cost phase oracle on the same machine and
+binary.
+
+Figure~\ref{fig:selected-validation} and
+Table~\ref{tab:selected-validation} report seed/repetition-matched ratios.
+The best V2 setting is sample rate 64 in all three regimes.  Nevertheless,
+V2 reaches only \(0.881\times\), \(0.890\times\), and \(0.931\times\) of
+static regional throughput.  Every 95\% interval lies below one.  The
+zero-cost oracle confirms genuine but narrow opportunity:
+\(1.032\times\), \(1.029\times\), and \(1.041\times\), respectively.
+Thus the conclusion is not that fanout never matters; it is that this online
+mechanism cannot capture a benefit of this size cheaply enough.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_dynamic_selected_validation.pdf}
+  \caption{Selected-regime validation with paired 95\% bootstrap intervals.
+  A retrospective zero-cost oracle is above static, while Adaptive V2 is
+  significantly below its matched static-regional baseline in every regime.}
+  \Description{Grouped bars compare zero-cost oracle and Adaptive V2
+  throughput ratios in zero, borderline, and high-headroom regimes.}
+  \label{fig:selected-validation}
+\end{figure}
+
+\begin{table}[t]
+  \centering
+  \caption{Selected-regime validation.  Adaptive columns use 50 paired runs;
+  oracle ratios use five matched seeds.}
+  \label{tab:selected-validation}
+  \resizebox{\columnwidth}{!}{\input{tables/dynamic_selected_validation.tex}}
+\end{table}
+
+The time-domain comparison in Figure~\ref{fig:selected-costs} makes the
+break-even failure explicit.  Across the three regimes, the oracle saves
+0.0049, 0.0050, and 0.0106~\us/op, whereas V2 adds 0.0211, 0.0219, and
+0.0199~\us/op relative to its paired static baseline.  Even in the High
+regime, ongoing adaptive cost is about \(1.9\times\) the maximum retrospective
+benefit before charging any uncertainty or prediction error.  Longer phases
+cannot repair the first two regimes because their recurring cost already
+exceeds their per-operation benefit.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_dynamic_selected_costs.pdf}
+  \caption{Oracle benefit and Adaptive V2 penalty in time per operation.  The
+  online penalty exceeds the available fanout benefit in every regime.}
+  \Description{Grouped bars compare oracle time savings with adaptive time
+  penalties for three selected workload regimes.}
+  \label{fig:selected-costs}
+\end{figure}
 
 \subsection{Memory Reclamation and Reader Safety}
 

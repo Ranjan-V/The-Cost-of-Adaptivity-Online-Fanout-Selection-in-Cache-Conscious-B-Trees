@@ -1,0 +1,13 @@
+{
+  "family": "monitor_ladder",
+  "workload_family": "zipf",
+  "records": [100000, 1000000],
+  "operations": [1000000],
+  "zipf": [0.99],
+  "sample_rate": [8, 16, 32, 64, 128],
+  "seed": [11, 23, 37, 53, 71],
+  "variants": ["STATIC", "STATIC+ROUTER", "STATIC+BOUNDED-MONITOR", "STATIC+OLD-MONITOR", "STATIC+OLD-SHADOW-RECORDS", "STATIC+BOUNDED-MONITOR+ROUTER", "ADAPT-V1", "ADAPT-V2"],
+  "fanout": [64],
+  "repetitions": 10,
+  "warmup": 10000
+}

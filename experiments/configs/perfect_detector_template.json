@@ -1,0 +1,19 @@
+{
+  "family": "perfect_detector",
+  "selection_status": "RESULT_PENDING",
+  "workload_family": "shifting",
+  "records": [1000000],
+  "operations": [10000000],
+  "phase_length": [100000],
+  "hot_fraction": [0.2],
+  "zipf": [0.99],
+  "sample_rate": [32],
+  "seed": [11, 23, 37, 53, 71],
+  "variants": ["STATIC-REGIONAL", "PERFECT-V1", "PERFECT-V2", "ADAPT-V1", "ADAPT-V2"],
+  "fanout": [64],
+  "phase_oracle_csv": "results/processed/phase_oracle.csv",
+  "phase_oracle_family": "dynamic_broad",
+  "oracle_repetition": 0,
+  "repetitions": 10,
+  "warmup": 10000
+}

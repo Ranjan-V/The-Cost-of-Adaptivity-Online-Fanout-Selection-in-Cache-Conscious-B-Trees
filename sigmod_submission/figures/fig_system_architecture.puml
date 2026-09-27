@@ -1,0 +1,43 @@
+@startuml
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundcorner 4
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam componentStyle rectangle
+skinparam ArrowColor Black
+skinparam packageBorderColor Black
+skinparam packageBackgroundColor White
+
+actor "Lookup / Update" as Client
+
+package "Foreground path: every operation" {
+  component "Key-range\nrouter" as Router
+  component "Segment-local\nB+ tree" as Tree
+  component "Shadow\nrecords map" as Records
+  component "Sample gate\n(1 in 10)" as Sampler
+}
+
+package "Periodic control path: every 5,000 segment accesses" {
+  component "Access monitor\nheat + frequency" as Monitor
+  component "Signal summary\ndominance + coverage" as Signals
+  component "Fanout\npredictor" as Predictor
+  component "Rebuild gate\nhysteresis + cooldown + cost" as Gate
+  component "Segment\nrebuilder" as Rebuilder
+}
+
+Client -right-> Router : operation
+Router -right-> Tree : route
+Router -down-> Records : maintain
+Router -down-> Sampler : event
+
+Sampler -down-> Monitor : sample
+Monitor -right-> Signals : state
+Signals -right-> Predictor : summary
+Predictor -right-> Gate : candidate
+Gate -down-> Rebuilder : accept
+Records -down-> Rebuilder : records
+Rebuilder -up-> Tree : publish
+
+@enduml

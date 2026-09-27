@@ -1,0 +1,13 @@
+{
+  "family": "scale",
+  "workload_family": "zipf",
+  "records": [100000, 1000000, 5000000],
+  "operations": [1000000],
+  "zipf": [0.99],
+  "sample_rate": [32],
+  "seed": [11, 23, 37, 53, 71],
+  "variants": ["STATIC", "ADAPT-V1", "ADAPT-V2"],
+  "fanout": [64],
+  "repetitions": 10,
+  "warmup": 10000
+}

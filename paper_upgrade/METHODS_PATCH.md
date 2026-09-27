@@ -1,0 +1,5 @@
+# Methods patch for later manuscript integration
+
+STATUS: IMPLEMENTED_NOT_EXECUTED.
+
+Describe the baseline fixed-fanout B+ tree, regional routing, original V1 duplicate-record/replay design, and V2 live-tree export/bottom-up rebuild plus bounded monitor. State V1/V2 are single-threaded adaptive indexes. Describe deterministic generated read/update sequences and the workload fingerprint. Report compiler flags, exact compiler version, hardware identifier, seeds, warmup, repetition count, randomized order seed, and the full parameter grid. The controlled laptop supplies precise timings; Kaggle CPU is independent replication. Report the static fanout envelope as retrospective, not a deployable oracle. The perfect-detector baseline must pay actual rebuild time and use externally selected per-phase fanouts for the whole regional layout. Separate run-level timings from per-phase timings; both are instrumented in the prepared driver but require execution and validation. Document non-rebalancing deletion and any unsupported counters.

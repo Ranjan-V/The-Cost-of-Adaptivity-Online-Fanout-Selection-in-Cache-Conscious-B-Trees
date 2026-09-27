@@ -1,0 +1,15 @@
+{
+  "family": "dynamic_broad",
+  "workload_family": "shifting",
+  "records": [1000000],
+  "operations": [10000000],
+  "phase_length": [10000, 100000, 1000000, 5000000],
+  "hot_fraction": [0.01, 0.05, 0.2],
+  "zipf": [0.8, 0.99, 1.2],
+  "sample_rate": [16, 32, 64],
+  "seed": [11, 23, 37, 53, 71],
+  "variants": ["STATIC", "STATIC-REGIONAL"],
+  "fanout": [8, 16, 32, 64, 128, 256],
+  "repetitions": 1,
+  "warmup": 10000
+}

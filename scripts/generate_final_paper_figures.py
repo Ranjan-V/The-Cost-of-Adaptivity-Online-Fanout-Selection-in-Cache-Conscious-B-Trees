@@ -7,6 +7,9 @@ from collections import defaultdict
 
 import matplotlib.pyplot as plt
 
+plt.rcParams["pdf.fonttype"] = 42
+plt.rcParams["ps.fonttype"] = 42
+plt.rcParams["font.family"] = "DejaVu Sans"
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 RESULTS = os.path.join(ROOT, "results")
@@ -145,8 +148,11 @@ def overhead_figure():
 
 def benefit_penalty_figure():
     labels = ["YCSB-A", "YCSB-B", "YCSB-C", "Shift", "Wiki"]
-    benefit = [0.015, 0.013, 0.010, 0.011, 0.0003]
-    penalty = [0.047, 0.060, 0.055, 0.014, 0.023]
+    # Current paper values, converted from the reported throughput summaries
+    # to microseconds per operation. Stationary "benefit" is the best static
+    # fanout relative to f=64; shifting uses the phase-aware oracle.
+    benefit = [0.0000, 0.0091, 0.0000, 0.0167, 0.0003]
+    penalty = [0.0483, 0.0561, 0.0690, 0.0169, 0.0228]
     x = range(len(labels))
     width = 0.34
 

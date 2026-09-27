@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <chrono>
 #include <cstddef>
 #include <iostream>
 #include <stdexcept>
@@ -69,6 +70,8 @@ struct SegmentedAdaptiveStats {
     size_t rebuilds_skipped_hysteresis;
     size_t rebuilds_skipped_cost;
     size_t rebuilds_skipped_cooldown;
+    double rebuild_ms;
+    double max_rebuild_ms;
     double avg_fanout;
     double cache_hit_rate;
 
@@ -84,6 +87,8 @@ struct SegmentedAdaptiveStats {
         , rebuilds_skipped_hysteresis(0)
         , rebuilds_skipped_cost(0)
         , rebuilds_skipped_cooldown(0)
+        , rebuild_ms(0.0)
+        , max_rebuild_ms(0.0)
         , avg_fanout(0.0)
         , cache_hit_rate(0.0) {}
 };
@@ -114,6 +119,8 @@ private:
         size_t rebuilds_skipped_cooldown;
         double last_estimated_benefit;
         double last_estimated_cost;
+        double rebuild_ms;
+        double max_rebuild_ms;
 
         Segment(size_t initial_fanout,
                 size_t min_fanout,
@@ -139,7 +146,9 @@ private:
             , rebuilds_skipped_cost(0)
             , rebuilds_skipped_cooldown(0)
             , last_estimated_benefit(0.0)
-            , last_estimated_cost(0.0) {}
+            , last_estimated_cost(0.0)
+            , rebuild_ms(0.0)
+            , max_rebuild_ms(0.0) {}
 
         ~Segment() {
             delete tree;
@@ -386,6 +395,8 @@ public:
             stats.rebuilds_skipped_hysteresis += segment.rebuilds_skipped_hysteresis;
             stats.rebuilds_skipped_cost += segment.rebuilds_skipped_cost;
             stats.rebuilds_skipped_cooldown += segment.rebuilds_skipped_cooldown;
+            stats.rebuild_ms += segment.rebuild_ms;
+            stats.max_rebuild_ms = std::max(stats.max_rebuild_ms, segment.max_rebuild_ms);
             total_fanout += segment.current_fanout;
             total_cache_hits += segment.cache_hits;
         }
@@ -403,6 +414,19 @@ public:
 
     void set_adaptation_enabled(bool enabled) {
         adaptation_enabled_ = enabled;
+    }
+
+    // Diagnostic only: caller supplies an externally selected phase target.
+    // Like all segmented adaptation here, this requires single-threaded use.
+    void force_rebuild(size_t segment_id, size_t target_fanout) {
+        if (segment_id >= segments_.size() || target_fanout < min_fanout_ ||
+            target_fanout > max_fanout_) {
+            throw std::invalid_argument("invalid forced V1 rebuild target");
+        }
+        Segment& segment = *segments_[segment_id];
+        if (segment.current_fanout != target_fanout) {
+            rebuild_segment(segment, target_fanout);
+        }
     }
 
     void reset_adaptation_state() {
@@ -424,6 +448,8 @@ public:
             segment.rebuilds_skipped_hysteresis = 0;
             segment.rebuilds_skipped_cost = 0;
             segment.rebuilds_skipped_cooldown = 0;
+            segment.rebuild_ms = 0.0;
+            segment.max_rebuild_ms = 0.0;
             segment.last_estimated_benefit = 0.0;
             segment.last_estimated_cost = 0.0;
         }
@@ -761,6 +787,7 @@ private:
     }
 
     void rebuild_segment(Segment& segment, size_t new_fanout) {
+        const std::chrono::steady_clock::time_point started = std::chrono::steady_clock::now();
         cabtree::BPlusTree<KeyType, ValueType>* rebuilt =
             new cabtree::BPlusTree<KeyType, ValueType>(
                 static_cast<int>(new_fanout));
@@ -779,6 +806,10 @@ private:
         segment.last_restructure_access = segment.access_count;
         segment.pending_fanout = new_fanout;
         segment.pending_votes = 0;
+        const double ms = std::chrono::duration<double, std::milli>(
+            std::chrono::steady_clock::now() - started).count();
+        segment.rebuild_ms += ms;
+        segment.max_rebuild_ms = std::max(segment.max_rebuild_ms, ms);
     }
 
 private:

@@ -22,7 +22,7 @@ int main() {
     }
     
     // Search for a value
-    int value;
+    int value = 0;
     bool found = tree.search(5, value);
     
     if (found && value == 500) {

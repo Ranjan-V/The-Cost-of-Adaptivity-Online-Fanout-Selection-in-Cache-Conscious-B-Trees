@@ -1,0 +1,60 @@
+name: Reproducibility
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cpp11:
+    name: C++11 / ${{ matrix.compiler }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - compiler: GCC
+            cxx: g++
+          - compiler: Clang
+            cxx: clang++
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compiler identity
+        run: ${{ matrix.cxx }} --version
+      - name: Build, test, and semantic smoke
+        env:
+          CXX: ${{ matrix.cxx }}
+        run: bash scripts/linux/ci.sh normal
+
+  sanitizers:
+    name: ASan and UBSan
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test with sanitizers
+        env:
+          CXX: clang++
+          ASAN_OPTIONS: detect_leaks=1:strict_string_checks=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        run: bash scripts/linux/ci.sh sanitizers
+
+  paper-source:
+    name: Anonymous paper source
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile manuscript
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+          working_directory: sigmod_submission
+          latexmk_use_xelatex: false
+          args: -pdf -file-line-error -halt-on-error -interaction=nonstopmode
+      - name: Upload compiled manuscript
+        uses: actions/upload-artifact@v4
+        with:
+          name: sigmod-submission-anonymous
+          path: sigmod_submission/main.pdf

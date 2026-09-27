@@ -1,5 +1,7 @@
 # The Cost of Adaptivity: Online Fanout Selection in Cache-Conscious B-Trees
 
+[![Reproducibility](https://github.com/Ranjan-V/The-Cost-of-Adaptivity-Online-Fanout-Selection-in-Cache-Conscious-B-Trees/actions/workflows/reproducibility.yml/badge.svg)](https://github.com/Ranjan-V/The-Cost-of-Adaptivity-Online-Fanout-Selection-in-Cache-Conscious-B-Trees/actions/workflows/reproducibility.yml)
+
 This repository is a SIGMOD/VLDB-style systems research prototype for studying
 whether B+ trees should adapt node fanout online based on observed access
 patterns.
@@ -42,6 +44,23 @@ Implemented and tested:
 
 The code targets C++11 and GCC 6.3.0 on Windows/MinGW.
 
+## Experimental Upgrade Status
+
+Adaptive V2 removes V1's duplicate shadow-record map, uses a fixed-size sampled
+monitor, and bulk-loads replacement segments from sorted records.  Local GCC
+correctness tests and paired STATIC/V1/V2 smoke checks pass with identical
+checksums and workload fingerprints and zero misses.  The completed Kaggle
+selected-regime campaign contains 1,740 runs; its archive provenance and
+processed summaries are recorded under `results/manifests/` and
+`results/processed/`.
+
+Broader Modal screening, the final controlled laptop campaign, hardware-counter
+analysis, and ARM/independent-x86 replication remain pending.  Prepared code is
+not evidence of a completed experiment.  Start with
+[ARTIFACT_README.md](ARTIFACT_README.md),
+[EXECUTION_CHECKLIST.md](EXECUTION_CHECKLIST.md), and
+[docs/REPOSITORY_AUDIT.md](docs/REPOSITORY_AUDIT.md).
+
 ## Repository Layout
 
 ```text
@@ -51,6 +70,8 @@ include/
   predictor/predictor.h                 Fanout predictor
   adaptive/adaptive_btree*.h            Global adaptive variants
   adaptive/segmented_adaptive_btree.h   Per-range adaptive implementation
+  adaptive/segmented_adaptive_v2.h      Bounded-monitor/bulk-load V2
+  monitor/bounded_monitor.h             Fixed-space sampled monitor
 
 tests/
   test_btree.cpp
@@ -58,6 +79,7 @@ tests/
   test_predictor.cpp
   test_adaptive*.cpp
   test_segmented_adaptive.cpp
+  test_v2.cpp
 
 benchmarks/
   benchmark_ycsb.cpp                    Stationary YCSB-style workloads
@@ -66,6 +88,7 @@ benchmarks/
   benchmark_wiki_trace.cpp              Real Wikipedia pageview trace
   benchmark_threads.cpp                 Optimistic lock coupling scalability
   benchmark_dynamic.cpp                 Sliding hotspot stress test
+  benchmark_unified.cpp                 Reproducible STATIC/V1/V2 driver
 
 scripts/
   analyze_ycsb.py
@@ -84,7 +107,10 @@ paper/tables/
   Auto-generated LaTeX result tables
 
 results/
-  CSV outputs and generated result summary
+  Curated CSV summaries, manifests, provenance, and figures
+
+modal/
+  CPU-only overflow-screening plan and dry-run-first launcher
 ```
 
 ## Build
@@ -349,3 +375,26 @@ This is currently stronger as a SIGMOD/VLDB negative-result or diagnostic
 systems paper than as a positive "2-3x faster" paper. The work is still valuable
 because it provides implementation evidence, oracle baselines, real-trace data,
 and a mathematical explanation for the failure mode.
+
+### Selected-regime Kaggle validation
+
+The completed Stage 3 CPU campaign contains 1,740 one-million-operation runs
+with no failed or partial outputs. Seed/repetition-matched hierarchical
+bootstrap analysis finds that the best Adaptive V2 configuration reaches
+0.881x, 0.890x, and 0.931x of static-regional throughput in the zero,
+borderline, and high-headroom regimes. The corresponding retrospective
+zero-cost oracle ratios are 1.032x, 1.029x, and 1.041x. Even in the strongest
+regime, the measured adaptive penalty (0.0199 us/op) exceeds the oracle benefit
+(0.0106 us/op).
+
+Reproduce the processed tables and figures directly from the downloaded
+archive with:
+
+```powershell
+.\venv\Scripts\python.exe analysis\dynamic_selected_report.py `
+  --archive results-now-2.zip `
+  --processed-dir results\processed `
+  --table paper\tables\dynamic_selected_validation.tex `
+  --figure-dir results\figures `
+  --figure-dir paper-final\figures
+```

@@ -1,0 +1,13 @@
+Artifact: results-now-2.zip
+SHA256: BD50D73A20460215032E9278E2A94547D40D02C310C89FEFA44D3DFC493F518D
+Kaggle notebook: VLDB-First-upgrade-selected, Version 2
+Kaggle script version: 351161882
+Machine fingerprint: f410f7064c081e00
+CPU: Intel(R) Xeon(R) CPU @ 2.20GHz, 4 vCPUs
+Compiler: GCC 11.4.0
+Flags: -std=c++11 -O3 -march=native -DNDEBUG
+Main result CSVs: 1740
+Phase result CSVs: 1740
+Failed markers: 0
+Partial CSVs: 0
+Analysis: analysis/dynamic_selected_report.py

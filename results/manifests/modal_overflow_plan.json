@@ -1,0 +1,276 @@
+{
+  "config": {
+    "campaign": "modal-overflow-v1",
+    "status": "READY_FOR_REVIEW",
+    "workload_family": "shifting",
+    "records": [
+      100000,
+      1000000
+    ],
+    "operations": [
+      1000000
+    ],
+    "phase_length": [
+      10000,
+      100000,
+      1000000
+    ],
+    "hot_fraction": [
+      0.01,
+      0.05,
+      0.2
+    ],
+    "zipf": [
+      0.8,
+      0.99,
+      1.2
+    ],
+    "read_update": [
+      [
+        1.0,
+        0.0
+      ],
+      [
+        0.95,
+        0.05
+      ],
+      [
+        0.5,
+        0.5
+      ]
+    ],
+    "fanout": [
+      8,
+      16,
+      32,
+      64,
+      128,
+      256
+    ],
+    "sample_rate": [
+      32
+    ],
+    "seed": [
+      11,
+      23,
+      37,
+      53,
+      71
+    ],
+    "variants": [
+      "STATIC",
+      "STATIC-REGIONAL"
+    ],
+    "segments": 8,
+    "adapt_interval": 5000,
+    "warmup": 10000,
+    "latency_sampling_rate": 1024,
+    "repetitions": 1,
+    "ordering_seed": 2027,
+    "purpose": "Opportunity screening only; do not pool absolute throughput across CPU fingerprints."
+  },
+  "job_count": 9720,
+  "config_sha256": "18cd5837590780ee1a1bc74af7b2550e65d38b96fc30fd4797e9636cd9d9c3da",
+  "first_jobs": [
+    {
+      "campaign": "modal-overflow-v1",
+      "variant": "STATIC",
+      "repetition": 0,
+      "parameters": {
+        "records": 100000,
+        "operations": 1000000,
+        "phase_length": 10000,
+        "hot_fraction": 0.01,
+        "zipf": 0.8,
+        "read_update": [
+          1.0,
+          0.0
+        ],
+        "fanout": 8,
+        "sample_rate": 32,
+        "seed": 11
+      },
+      "job_id": "21d588e6c4272017b3f33dcc"
+    },
+    {
+      "campaign": "modal-overflow-v1",
+      "variant": "STATIC-REGIONAL",
+      "repetition": 0,
+      "parameters": {
+        "records": 100000,
+        "operations": 1000000,
+        "phase_length": 10000,
+        "hot_fraction": 0.01,
+        "zipf": 0.8,
+        "read_update": [
+          1.0,
+          0.0
+        ],
+        "fanout": 8,
+        "sample_rate": 32,
+        "seed": 11
+      },
+      "job_id": "020b7943b97276b07c63c053"
+    },
+    {
+      "campaign": "modal-overflow-v1",
+      "variant": "STATIC",
+      "repetition": 0,
+      "parameters": {
+        "records": 100000,
+        "operations": 1000000,
+        "phase_length": 10000,
+        "hot_fraction": 0.01,
+        "zipf": 0.8,
+        "read_update": [
+          1.0,
+          0.0
+        ],
+        "fanout": 8,
+        "sample_rate": 32,
+        "seed": 23
+      },
+      "job_id": "3923c3a7fad67ef95e5543e0"
+    },
+    {
+      "campaign": "modal-overflow-v1",
+      "variant": "STATIC-REGIONAL",
+      "repetition": 0,
+      "parameters": {
+        "records": 100000,
+        "operations": 1000000,
+        "phase_length": 10000,
+        "hot_fraction": 0.01,
+        "zipf": 0.8,
+        "read_update": [
+          1.0,
+          0.0
+        ],
+        "fanout": 8,
+        "sample_rate": 32,
+        "seed": 23
+      },
+      "job_id": "ad79e928244768ac29f042e6"
+    },
+    {
+      "campaign": "modal-overflow-v1",
+      "variant": "STATIC",
+      "repetition": 0,
+      "parameters": {
+        "records": 100000,
+        "operations": 1000000,
+        "phase_length": 10000,
+        "hot_fraction": 0.01,
+        "zipf": 0.8,
+        "read_update": [
+          1.0,
+          0.0
+        ],
+        "fanout": 8,
+        "sample_rate": 32,
+        "seed": 37
+      },
+      "job_id": "794bb97d1962ea9388cb674c"
+    },
+    {
+      "campaign": "modal-overflow-v1",
+      "variant": "STATIC-REGIONAL",
+      "repetition": 0,
+      "parameters": {
+        "records": 100000,
+        "operations": 1000000,
+        "phase_length": 10000,
+        "hot_fraction": 0.01,
+        "zipf": 0.8,
+        "read_update": [
+          1.0,
+          0.0
+        ],
+        "fanout": 8,
+        "sample_rate": 32,
+        "seed": 37
+      },
+      "job_id": "e7fcee821781ca1f03056254"
+    },
+    {
+      "campaign": "modal-overflow-v1",
+      "variant": "STATIC",
+      "repetition": 0,
+      "parameters": {
+        "records": 100000,
+        "operations": 1000000,
+        "phase_length": 10000,
+        "hot_fraction": 0.01,
+        "zipf": 0.8,
+        "read_update": [
+          1.0,
+          0.0
+        ],
+        "fanout": 8,
+        "sample_rate": 32,
+        "seed": 53
+      },
+      "job_id": "31535a4536d14d39f3ebbe2e"
+    },
+    {
+      "campaign": "modal-overflow-v1",
+      "variant": "STATIC-REGIONAL",
+      "repetition": 0,
+      "parameters": {
+        "records": 100000,
+        "operations": 1000000,
+        "phase_length": 10000,
+        "hot_fraction": 0.01,
+        "zipf": 0.8,
+        "read_update": [
+          1.0,
+          0.0
+        ],
+        "fanout": 8,
+        "sample_rate": 32,
+        "seed": 53
+      },
+      "job_id": "72d4ec9c03c9be96ad1939a9"
+    },
+    {
+      "campaign": "modal-overflow-v1",
+      "variant": "STATIC",
+      "repetition": 0,
+      "parameters": {
+        "records": 100000,
+        "operations": 1000000,
+        "phase_length": 10000,
+        "hot_fraction": 0.01,
+        "zipf": 0.8,
+        "read_update": [
+          1.0,
+          0.0
+        ],
+        "fanout": 8,
+        "sample_rate": 32,
+        "seed": 71
+      },
+      "job_id": "ba9774cb90d65c63194c290d"
+    },
+    {
+      "campaign": "modal-overflow-v1",
+      "variant": "STATIC-REGIONAL",
+      "repetition": 0,
+      "parameters": {
+        "records": 100000,
+        "operations": 1000000,
+        "phase_length": 10000,
+        "hot_fraction": 0.01,
+        "zipf": 0.8,
+        "read_update": [
+          1.0,
+          0.0
+        ],
+        "fanout": 8,
+        "sample_rate": 32,
+        "seed": 71
+      },
+      "job_id": "2b6085f1dd16a28396e3b1df"
+    }
+  ]
+}

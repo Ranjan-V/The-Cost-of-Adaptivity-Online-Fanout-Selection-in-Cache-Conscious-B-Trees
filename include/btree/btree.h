@@ -7,6 +7,8 @@
 #include <cstdint>
 #include <cstring>
 #include <stdexcept>
+#include <utility>
+#include <memory>
 
 #ifdef _WIN32
 #ifndef NOMINMAX
@@ -37,6 +39,9 @@ public:
     bool search(const Key& key, Value& value) const;
     bool remove(const Key& key);
     std::vector<Value> range_query(const Key& start, const Key& end) const;
+    // Caller must exclude concurrent writers while exporting or replacing a tree.
+    std::vector<std::pair<Key, Value> > export_sorted() const;
+    void bulk_load_sorted(const std::vector<std::pair<Key, Value> >& records);
     
     size_t size() const { return num_keys_.load(std::memory_order_acquire); }
     bool empty() const { return size() == 0; }
@@ -54,6 +59,7 @@ public:
     };
     
     Stats get_stats() const;
+    size_t approximate_owned_bytes() const;
 
 private:
     struct Node {
@@ -102,8 +108,10 @@ private:
 template<typename Key, typename Value>
 BPlusTree<Key, Value>::Node::Node(bool leaf, int capacity) 
     : is_leaf(leaf), num_keys(0), parent(NULL), next(NULL), version_lock(0) {
-    keys = new Key[capacity];
-    pointers = new void*[capacity + 1];
+    std::unique_ptr<Key[]> pending_keys(new Key[capacity]);
+    std::unique_ptr<void*[]> pending_pointers(new void*[capacity + 1]);
+    keys = pending_keys.release();
+    pointers = pending_pointers.release();
     std::memset(pointers, 0, sizeof(void*) * (capacity + 1));
 }
 
@@ -621,6 +629,104 @@ std::vector<Value> BPlusTree<Key, Value>::range_query(const Key& start, const Ke
 }
 
 template<typename Key, typename Value>
+std::vector<std::pair<Key, Value> > BPlusTree<Key, Value>::export_sorted() const {
+    std::vector<std::pair<Key, Value> > result;
+    result.reserve(size());
+    for (Node* leaf = first_leaf_; leaf; leaf = leaf->next) {
+        for (int i = 0; i < leaf->num_keys; ++i) {
+            result.push_back(std::make_pair(
+                leaf->keys[i], *static_cast<Value*>(leaf->pointers[i])));
+        }
+    }
+    return result;
+}
+
+template<typename Key, typename Value>
+void BPlusTree<Key, Value>::bulk_load_sorted(
+    const std::vector<std::pair<Key, Value> >& records) {
+    for (size_t i = 1; i < records.size(); ++i) {
+        if (!(records[i - 1].first < records[i].first)) {
+            throw std::invalid_argument("bulk_load_sorted requires strictly increasing keys");
+        }
+    }
+
+    // All allocated nodes are tracked until the new root is ready; this also
+    // makes a failed allocation leave the original tree untouched.
+    std::vector<Node*> allocated;
+    std::vector<std::pair<Node*, Key> > level;
+    Node* first = NULL;
+    Node* replacement = NULL;
+    try {
+        if (records.empty()) {
+            std::unique_ptr<Node> pending(new Node(true, fanout_));
+            replacement = pending.get();
+            allocated.push_back(replacement);
+            pending.release();
+            first = replacement;
+        } else {
+            const size_t leaf_capacity = static_cast<size_t>(fanout_ - 1);
+            const size_t leaf_count = (records.size() + leaf_capacity - 1) / leaf_capacity;
+            const size_t leaf_base = records.size() / leaf_count;
+            const size_t leaf_extra = records.size() % leaf_count;
+            size_t offset = 0;
+            Node* previous = NULL;
+            for (size_t group = 0; group < leaf_count; ++group) {
+                std::unique_ptr<Node> pending(new Node(true, fanout_));
+                Node* leaf = pending.get();
+                allocated.push_back(leaf);
+                pending.release();
+                if (!first) first = leaf;
+                if (previous) previous->next = leaf;
+                previous = leaf;
+                const size_t count = leaf_base + (group < leaf_extra ? 1 : 0);
+                for (size_t j = 0; j < count; ++j) {
+                    leaf->keys[j] = records[offset + j].first;
+                    leaf->pointers[j] = new Value(records[offset + j].second);
+                    ++leaf->num_keys;
+                }
+                level.push_back(std::make_pair(leaf, leaf->keys[0]));
+                offset += count;
+            }
+            while (level.size() > 1) {
+                std::vector<std::pair<Node*, Key> > upper;
+                const size_t child_capacity = static_cast<size_t>(fanout_);
+                const size_t parent_count = (level.size() + child_capacity - 1) / child_capacity;
+                const size_t base = level.size() / parent_count;
+                const size_t extra = level.size() % parent_count;
+                size_t cursor = 0;
+                for (size_t group = 0; group < parent_count; ++group) {
+                    std::unique_ptr<Node> pending(new Node(false, fanout_));
+                    Node* parent = pending.get();
+                    allocated.push_back(parent);
+                    pending.release();
+                    const size_t children = base + (group < extra ? 1 : 0);
+                    for (size_t j = 0; j < children; ++j) {
+                        Node* child = level[cursor + j].first;
+                        parent->pointers[j] = child;
+                        child->parent = parent;
+                        if (j > 0) {
+                            parent->keys[j - 1] = level[cursor + j].second;
+                            ++parent->num_keys;
+                        }
+                    }
+                    upper.push_back(std::make_pair(parent, level[cursor].second));
+                    cursor += children;
+                }
+                level.swap(upper);
+            }
+            replacement = level[0].first;
+        }
+    } catch (...) {
+        for (size_t i = 0; i < allocated.size(); ++i) delete allocated[i];
+        throw;
+    }
+    Node* old = root_.exchange(replacement, std::memory_order_acq_rel);
+    first_leaf_ = first;
+    num_keys_.store(records.size(), std::memory_order_release);
+    delete_tree(old);
+}
+
+template<typename Key, typename Value>
 int BPlusTree<Key, Value>::height() const {
     int h = 0;
     Node* node = root_.load(std::memory_order_acquire);
@@ -662,6 +768,16 @@ void BPlusTree<Key, Value>::count_nodes(Node* node, size_t& internal, size_t& le
             count_nodes(static_cast<Node*>(node->pointers[i]), internal, leaf);
         }
     }
+}
+
+template<typename Key, typename Value>
+size_t BPlusTree<Key, Value>::approximate_owned_bytes() const {
+    size_t internal = 0, leaves = 0;
+    count_nodes(root_.load(std::memory_order_acquire), internal, leaves);
+    return (internal + leaves) *
+               (sizeof(Node) + sizeof(Key) * static_cast<size_t>(fanout_) +
+                sizeof(void*) * static_cast<size_t>(fanout_ + 1)) +
+           size() * sizeof(Value);
 }
 
 } // namespace cabtree

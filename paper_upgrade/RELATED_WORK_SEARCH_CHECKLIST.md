@@ -1,0 +1,3 @@
+# Related-work search checklist
+
+Use only repository references for the current static audit. Before a venue submission, manually verify primary sources for: hotness-aware B+ trees; cache-conscious and cache-oblivious trees; adaptive radix trees; database cracking; adaptive merging; learned and dynamic learned indexes; self-tuning physical design; online reconfiguration; modern in-memory tree benchmarks; bounded frequency sketches; adaptive storage layouts; recent workload-aware indexing. Record exact claim, paper, year, venue, DOI, and whether it is directly comparable. Do not fabricate citations.

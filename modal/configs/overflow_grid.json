@@ -1,0 +1,22 @@
+{
+  "campaign": "modal-overflow-v1",
+  "status": "READY_FOR_REVIEW",
+  "workload_family": "shifting",
+  "records": [100000, 1000000],
+  "operations": [1000000],
+  "phase_length": [10000, 100000, 1000000],
+  "hot_fraction": [0.01, 0.05, 0.2],
+  "zipf": [0.8, 0.99, 1.2],
+  "read_update": [[1.0, 0.0], [0.95, 0.05], [0.5, 0.5]],
+  "fanout": [8, 16, 32, 64, 128, 256],
+  "sample_rate": [32],
+  "seed": [11, 23, 37, 53, 71],
+  "variants": ["STATIC", "STATIC-REGIONAL"],
+  "segments": 8,
+  "adapt_interval": 5000,
+  "warmup": 10000,
+  "latency_sampling_rate": 1024,
+  "repetitions": 1,
+  "ordering_seed": 2027,
+  "purpose": "Opportunity screening only; do not pool absolute throughput across CPU fingerprints."
+}

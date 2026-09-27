@@ -1,0 +1,13 @@
+{
+  "family": "compiler_robustness",
+  "workload_family": "zipf",
+  "records": [100000, 1000000],
+  "operations": [1000000],
+  "zipf": [0.0, 0.99],
+  "read_update": [[0.95, 0.05]],
+  "seed": [11, 23, 37, 53, 71],
+  "fanout": [64],
+  "variants": ["STATIC", "ADAPT-V2"],
+  "repetitions": 5,
+  "warmup": 10000
+}
