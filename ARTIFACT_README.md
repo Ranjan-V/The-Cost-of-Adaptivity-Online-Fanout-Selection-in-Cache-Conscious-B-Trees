@@ -1,8 +1,11 @@
 # When Does Online Fanout Adaptation Pay? Artifact
 
-VALIDATION_STATUS: PARTIAL. The 1,740-run selected-regime V2 campaign is
-complete and archived as `results-now-2.zip`; the broader multi-platform V2,
-perfect-detector, scale, compiler, and cross-platform campaigns remain
+VALIDATION_STATUS: PARTIAL. The 1,080-run static opportunity campaign,
+1,620-run dynamic screening campaign, and 1,740-run selected/oracle/Perfect
+campaign are archived as `results.zip`, `results-2.zip`, and
+`results-now-2.zip`. The 300 Perfect rows have been identity-, fingerprint-,
+checksum-, miss-, pairing-, and rebuild-count-verified. Adaptive scale,
+compiler/sanitizer validation, and independent-platform replication remain
 RESULT_PENDING. Existing earlier paper CSVs remain separate legacy results.
 
 This C++11 artifact compares fixed-fanout trees, regional routing, the original segmented adaptive tree (V1), and a bounded-monitor/bulk-load design (V2). The controlled machine is Windows 11, i5-12500H, 16 GB RAM. Kaggle CPU is for broad sweeps and independent replication; GPU is unnecessary.
@@ -18,6 +21,8 @@ Field definitions and measurement caveats are in `experiments/RESULT_SCHEMA.md`.
 Kaggle source bundles are execution packages, not evidence by themselves.
 Completed claims must be traced to an archived result ZIP and manifest.  The
 selected-regime evidence is traced by
-`results/manifests/dynamic_selected_kaggle_v2.txt`; all other new campaign
-claims remain pending. See `EXECUTION_CHECKLIST.md` before drawing additional
-scientific conclusions.
+`results/manifests/dynamic_selected_kaggle_v2.txt`. Perfect raw-file identity
+and derived statistics are recorded in
+`results/processed/perfect_raw_file_inventory.csv`,
+`perfect_verification.md`, and `perfect_decomposition_summary.csv`. See
+`EXECUTION_CHECKLIST.md` before drawing additional scientific conclusions.

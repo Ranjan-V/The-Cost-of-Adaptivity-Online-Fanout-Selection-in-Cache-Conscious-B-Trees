@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <utility>
 #include <memory>
+#include <string>
 
 #ifdef _WIN32
 #ifndef NOMINMAX
@@ -60,6 +61,8 @@ public:
     
     Stats get_stats() const;
     size_t approximate_owned_bytes() const;
+    // Quiescent-state validator: callers must join writers before invoking it.
+    bool validate_invariants(std::string* reason = NULL) const;
 
 private:
     struct Node {
@@ -102,6 +105,12 @@ private:
     void insert_in_node(Node* node, int left_index, const Key& key, Node* right);
     void delete_tree(Node* node);
     void count_nodes(Node* node, size_t& internal, size_t& leaf) const;
+    bool validate_subtree(Node* node, Node* expected_parent, int depth,
+                          int& leaf_depth, size_t& key_count,
+                          std::vector<Node*>& leaves,
+                          std::string* reason) const;
+    const Key* subtree_min_key(Node* node) const;
+    const Key* subtree_max_key(Node* node) const;
 };
 
 // Implementation
@@ -778,6 +787,111 @@ size_t BPlusTree<Key, Value>::approximate_owned_bytes() const {
                (sizeof(Node) + sizeof(Key) * static_cast<size_t>(fanout_) +
                 sizeof(void*) * static_cast<size_t>(fanout_ + 1)) +
            size() * sizeof(Value);
+}
+
+template<typename Key, typename Value>
+bool BPlusTree<Key, Value>::validate_subtree(
+    Node* node, Node* expected_parent, int depth, int& leaf_depth,
+    size_t& key_count, std::vector<Node*>& leaves, std::string* reason) const {
+    if (!node) {
+        if (reason) *reason = "null node";
+        return false;
+    }
+    if (node->parent != expected_parent) {
+        if (reason) *reason = "parent pointer mismatch";
+        return false;
+    }
+    const int maximum = node->is_leaf ? fanout_ - 1 : fanout_;
+    if (node->num_keys < 0 || node->num_keys > maximum) {
+        if (reason) *reason = "node key count outside capacity";
+        return false;
+    }
+    for (int i = 1; i < node->num_keys; ++i) {
+        if (!(node->keys[i - 1] < node->keys[i])) {
+            if (reason) *reason = "keys are not strictly increasing";
+            return false;
+        }
+    }
+    if (node->is_leaf) {
+        if (leaf_depth < 0) leaf_depth = depth;
+        if (leaf_depth != depth) {
+            if (reason) *reason = "leaves occur at different depths";
+            return false;
+        }
+        key_count += static_cast<size_t>(node->num_keys);
+        leaves.push_back(node);
+        return true;
+    }
+    if (node->num_keys == 0 && node != root_.load(std::memory_order_acquire)) {
+        if (reason) *reason = "empty non-root internal node";
+        return false;
+    }
+    for (int i = 0; i < node->num_keys; ++i) {
+        Node* left = static_cast<Node*>(node->pointers[i]);
+        Node* right = static_cast<Node*>(node->pointers[i + 1]);
+        const Key* left_max = subtree_max_key(left);
+        const Key* right_min = subtree_min_key(right);
+        if (!left_max || !right_min || !(*left_max < node->keys[i]) ||
+            node->keys[i] < *right_min || *right_min < node->keys[i]) {
+            if (reason) *reason = "internal separator does not match child ranges";
+            return false;
+        }
+    }
+    for (int i = 0; i <= node->num_keys; ++i) {
+        Node* child = static_cast<Node*>(node->pointers[i]);
+        if (!validate_subtree(child, node, depth + 1, leaf_depth,
+                              key_count, leaves, reason)) return false;
+    }
+    return true;
+}
+
+template<typename Key, typename Value>
+const Key* BPlusTree<Key, Value>::subtree_min_key(Node* node) const {
+    while (node && !node->is_leaf) node = static_cast<Node*>(node->pointers[0]);
+    return node && node->num_keys ? &node->keys[0] : NULL;
+}
+
+template<typename Key, typename Value>
+const Key* BPlusTree<Key, Value>::subtree_max_key(Node* node) const {
+    while (node && !node->is_leaf)
+        node = static_cast<Node*>(node->pointers[node->num_keys]);
+    return node && node->num_keys ? &node->keys[node->num_keys - 1] : NULL;
+}
+
+template<typename Key, typename Value>
+bool BPlusTree<Key, Value>::validate_invariants(std::string* reason) const {
+    if (reason) reason->clear();
+    Node* root = root_.load(std::memory_order_acquire);
+    if (!root) {
+        if (reason) *reason = "null root";
+        return false;
+    }
+    int leaf_depth = -1;
+    size_t key_count = 0;
+    std::vector<Node*> leaves;
+    if (!validate_subtree(root, NULL, 0, leaf_depth, key_count, leaves, reason))
+        return false;
+    if (key_count != size()) {
+        if (reason) *reason = "stored size differs from leaf key count";
+        return false;
+    }
+    if (leaves.empty() || first_leaf_ != leaves[0]) {
+        if (reason) *reason = "first leaf pointer mismatch";
+        return false;
+    }
+    for (size_t i = 0; i < leaves.size(); ++i) {
+        Node* expected = i + 1 < leaves.size() ? leaves[i + 1] : NULL;
+        if (leaves[i]->next != expected) {
+            if (reason) *reason = "leaf chain differs from tree traversal";
+            return false;
+        }
+        if (i && leaves[i - 1]->num_keys && leaves[i]->num_keys &&
+            !(leaves[i - 1]->keys[leaves[i - 1]->num_keys - 1] < leaves[i]->keys[0])) {
+            if (reason) *reason = "leaf ranges overlap or are unordered";
+            return false;
+        }
+    }
+    return true;
 }
 
 } // namespace cabtree

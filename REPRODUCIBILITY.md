@@ -1,6 +1,9 @@
 # Reproducibility map
 
-VALIDATION_STATUS: PARTIAL. Local correctness and the selected-regime Kaggle campaign are complete. Rows marked by pending configs below require their remaining campaigns before use in a submission.
+VALIDATION_STATUS: PARTIAL. Local single-thread correctness and the three
+archived Kaggle campaigns are complete. Perfect decomposition is verified from
+existing rows. Concurrent correctness, Clang/sanitizer validation, adaptive
+scale, and independent-platform replication remain pending.
 
 | Planned figure/table | Raw experiment | Config | Processing |
 |---|---|---|---|
@@ -8,7 +11,7 @@ VALIDATION_STATUS: PARTIAL. Local correctness and the selected-regime Kaggle cam
 | Break-even map | Selected STATIC/V1/V2 pairs | selected config after measured regime selection | `analysis/paired.py --output ...`, `analysis/plot_maps.py --paired ...`; CI classification only |
 | Phase-length curve | Regional static phase grid, then shifting phase lengths | `experiments/configs/phase_length_oracle_grid.json`, then `experiments/configs/phase_length.json` | `analysis/phase_oracle.py`, `analysis/aggregate.py`, `analysis/plot_campaign.py --phase-oracle ...` |
 | Monitor ladder | STATIC observation variants, V1/V2 | `experiments/configs/monitor_ladder.json` | `analysis/aggregate.py`, `analysis/paired.py`, `analysis/plot_campaign.py` |
-| Rebuild decomposition | Perfect V1/V2 vs static/oracle | `experiments/configs/perfect_detector_template.json`, blocked until measured dynamic-broad phase oracle | `analysis/phase_oracle.py`, `analysis/aggregate.py`; real rebuild time charged |
+| Rebuild decomposition | Perfect V1/V2 vs static/oracle | completed in `results-now-2.zip` | `analysis/perfect_decomposition.py`; outputs under `results/processed/perfect_*`; real rebuild time charged |
 | Scale curve | 100K, 1M, 5M | `experiments/configs/scale.json` | `analysis/aggregate.py`, `analysis/plot_campaign.py` |
 | Cloud replication | repeated selected configs on separate CPU group | selected config | normalized paired analysis only |
 

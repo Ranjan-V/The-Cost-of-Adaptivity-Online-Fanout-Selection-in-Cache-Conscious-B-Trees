@@ -1,0 +1,58 @@
+name: Correctness and Portability
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gcc:
+    name: GCC C++11
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: cmake --preset gcc-release
+      - run: cmake --build --preset gcc-release --parallel
+      - run: ctest --preset gcc-release
+
+  clang:
+    name: Clang C++11
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: cmake --preset clang-release
+      - run: cmake --build --preset clang-release --parallel
+      - run: ctest --preset clang-release
+
+  asan-ubsan:
+    name: ASan and UBSan
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: cmake --preset asan-ubsan
+      - run: cmake --build --preset asan-ubsan --parallel
+      - name: Run tests under ASan and UBSan
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1:strict_string_checks=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: ctest --preset asan-ubsan
+
+  concurrent-correctness:
+    name: Concurrent correctness evidence
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: cmake --preset clang-debug
+      - run: cmake --build --preset clang-debug --target test_btree_concurrent_correctness --parallel
+      - name: Run deterministic concurrent validation
+        run: |
+          mkdir -p results/validation/ci
+          build/codespaces/clang-debug/test_btree_concurrent_correctness \
+            results/validation/ci/concurrent_correctness.csv
+      - uses: actions/upload-artifact@v4
+        with:
+          name: concurrent-correctness
+          path: results/validation/ci/concurrent_correctness.csv

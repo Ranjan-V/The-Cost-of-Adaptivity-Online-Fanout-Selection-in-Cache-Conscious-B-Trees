@@ -522,10 +522,11 @@ unprofitable changes and report the rejection reason.
 
 \subsection{Implementation and Platform}
 
-The prototype is implemented in C++11 and compiled with GCC 6.3.0 under
-Windows/MinGW.  The codebase contains roughly 2700 lines across the baseline
+The prototype is implemented in C++11.  The local experiments are compiled
+with GCC 6.3.0 under Windows/MinGW on an ASUS laptop.  The codebase contains
+roughly 2700 lines across the baseline
 tree, monitor, predictor, adaptive policies, segmented tree, tests, and
-benchmarks.  Experiments run on one Windows 11 machine with a 12th-generation
+benchmarks.  These local experiments run on one Windows 11 machine with a 12th-generation
 Intel Core i5-12500H (12 physical cores, 16 hardware threads) and 16~GiB of
 RAM.  The GPU is not used.  This machine is intentionally modest: the goal is
 to study main-memory index overhead, not to rely on a large server or an
@@ -546,9 +547,9 @@ and adaptation is considered every 5,000 accesses to a segment.
 \toprule
 Parameter & Setting \\
 \midrule
-Language / compiler & C++11 / GCC 6.3.0 \\
-Machine & i5-12500H, 16 threads \\
-Memory / OS & 16 GiB / Windows 11 \\
+Local compiler / platform & GCC 6.3.0 / Windows 11 \\
+Local machine & ASUS i5-12500H, 16 threads, 16 GiB \\
+Selected campaign & Kaggle Xeon, 4 vCPU, GCC 11.4.0 \\
 Default / candidate fanouts & 64 / 8--256 \\
 Segments / sampling & 8 / V1: 1/10; V2: 1/16--1/64 \\
 Adaptation interval & 5,000 accesses \\
@@ -583,13 +584,13 @@ regional fanout for each phase.  The oracle answers RQ1: if advance knowledge
 cannot beat a static baseline, an online detector has no opportunity to
 capture.  It is not presented as an implementable competitor.
 
-The artifact additionally defines \emph{Perfect-V1} and \emph{Perfect-V2}
-configurations for a future decomposition.  They receive the selected fanout
-and phase boundary from a measured phase-oracle file but still pay their
-variant's real reconstruction cost.  This separates detection error from
-actuation cost.  We do not report those rows in the present paper because that
-campaign has not yet been executed; the retrospective zero-cost oracle used in
-Section~5.7 remains the deliberately optimistic opportunity bound.
+The artifact additionally implements \emph{Perfect-V1} and \emph{Perfect-V2}.
+They receive the selected fanout and phase boundary from a measured
+phase-oracle file but still pay their variant's real reconstruction cost.  The
+completed campaign contains 300 Perfect rows: three regimes, five seeds, ten
+repetitions, and two implementations.  These rows separate prediction error
+from actuation cost; the retrospective zero-cost oracle remains the deliberately
+optimistic opportunity bound.
 
 \subsection{Workloads}
 
@@ -654,6 +655,10 @@ hierarchical bootstrap intervals resample the five workload seeds and then the
 ten repetitions within each seed.  Oracle comparisons match each seed to its
 static calibration.  Because this campaign uses a different machine, we report
 within-machine ratios and do not pool absolute throughput across hosts.
+The local YCSB, shifting, Wikipedia, ablation, concurrency, and sliding-hotspot
+results therefore refer to the ASUS i5-12500H/Windows platform; the broad and
+selected-regime campaigns, including Perfect, refer to the Kaggle Xeon/Linux
+platform and GCC 11.4.0.
 
 \section{Results}
 
@@ -1003,6 +1008,43 @@ exceeds their per-operation benefit.
   penalties for three selected workload regimes.}
   \label{fig:selected-costs}
 \end{figure}
+
+\subsection{Perfect Detection and Actuation Cost}
+
+Perfect prediction does not imply profitable adaptation.  We pair each
+Perfect execution with STATIC-REGIONAL, Adaptive V1, and Adaptive V2 using the
+same seed, repetition, workload fingerprint, checksum, and zero miss count.
+The zero-cost oracle is measured once per seed at repetition zero; its fanout
+schedule is reused for the ten deterministic repetitions, so it is
+workload-paired but is not treated as 50 independent oracle measurements.
+Table~\ref{tab:perfect-decomposition} reports hierarchical bootstrap intervals.
+
+\begin{table*}[t]
+  \centering
+  \caption{Perfect-detector decomposition at sample rate 32.  Ratios are to
+  matched STATIC-REGIONAL.  Rebuild share is measured rebuild-routine time
+  divided by total wall time and is a lower bound on full actuation overhead.}
+  \label{tab:perfect-decomposition}
+  \resizebox{\textwidth}{!}{\input{tables/perfect_decomposition.tex}}
+\end{table*}
+
+In the Zero and Borderline regimes, Perfect-V2 reaches only \(0.490\times\)
+and \(0.625\times\) static, despite oracle opportunities of \(1.030\times\)
+and \(1.021\times\).  In the High regime, the 10K-operation phase length
+creates 100 phase boundaries.  The oracle schedule changes fanout often enough
+to trigger 470.4 segment rebuilds per run on average.  Perfect-V1 consequently
+reaches \(0.006\times\) static and spends 98.5\% of wall time inside measured
+rebuild routines; Perfect-V2 reaches \(0.064\times\) and spends 77.0\%.  The
+extreme ratios are not checksum failures or denominator artifacts: rebuilds
+are charged inside the same wall-clock interval as operations, and observed
+counts exactly equal oracle fanout transitions times eight segments.
+
+The online-control difference has the opposite sign from a naive predictor
+story.  Adaptive V2 is faster than Perfect-V2 in all three regimes because its
+cost gate rejects most or all changes.  Thus the decomposition attributes the
+dominant loss to actuation, while also showing that conservative online control
+can be beneficial precisely by refusing an oracle-selected layout whose
+short-lived operation-only advantage cannot repay reconstruction.
 
 \subsection{Cross-Workload Synthesis}
 

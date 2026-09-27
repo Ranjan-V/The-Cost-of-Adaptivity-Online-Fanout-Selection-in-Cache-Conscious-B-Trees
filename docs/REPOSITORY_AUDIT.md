@@ -1,9 +1,11 @@
 # Static repository audit
 
-AUDIT_STATUS: SOURCE INSPECTION COMPLETE. VALIDATION_STATUS: PARTIAL.  The
-selected-regime Kaggle V2 campaign is complete; broad opportunity, perfect
-detector, scale, compiler, hardware-counter, ARM, and independent x86 campaigns
-remain pending.
+AUDIT_STATUS: SOURCE INSPECTION COMPLETE. VALIDATION_STATUS: PARTIAL. The
+1,080-row static opportunity, 1,620-row dynamic screening, and 1,740-row
+selected/oracle/Perfect Kaggle campaigns are complete. The 300 Perfect rows
+are verified and analyzed. Adaptive scale, compiler/sanitizer validation and
+one independent-platform replication remain pending; hardware counters and ARM
+are not required by the smallest remaining plan.
 
 ## Architecture
 
@@ -36,9 +38,10 @@ remain pending.
 - Existing optimistic search reads mutable node fields without C++ atomic protection of those fields and no epoch/hazard reclamation. It must not be described as proven C++-memory-model-safe concurrent OLC. Multithreaded adaptation is out of scope.
 - `BPlusTree::clear()`, `export_sorted()`, and `bulk_load_sorted()` require quiescence. V2 replacement is only used from the single-threaded driver.
 - V1's cost scores are heuristic, not measured nanoseconds. V2 uses a related heuristic; this is not an empirical proof of optimal decisions.
-- The new unified benchmark currently supports read/update only, integer keys/values, and a single thread. It prepares run-level and phase-sidecar CSVs, retrospective phase-oracle analysis, and peak-RSS collection where the OS API supports it. Every new value remains RESULT_PENDING; precise tree bytes and full V1 monitoring counters remain UNSUPPORTED.
+- The unified benchmark currently supports read/update only, integer keys/values, and a single thread. It emits run-level and phase-sidecar CSVs, retrospective phase-oracle analysis, and peak-RSS collection where the OS API supports it. Existing Kaggle values are measured; precise V1 tree bytes and full V1 monitoring counters remain UNSUPPORTED.
 - Local config paths are repository-relative; runner output is under `results/raw/<environment>/<machine>/<family>/`. Legacy benchmark paths write directly into `results/` and can overwrite their own summary files.
-- The selected-regime V2 results have passed archive-count, failure/partial,
-  fingerprint, and paired-analysis checks and are included in the paper.  No
+- The selected-regime V2 and Perfect results have passed archive-count,
+  failure/partial, fingerprint, checksum, miss, paired-analysis, and Perfect
+  rebuild-accounting checks and are included in the paper. No
   other prepared campaign may be inserted until it is built, tested, checked
   for equivalent fingerprints/checksums, and run on the intended machine.

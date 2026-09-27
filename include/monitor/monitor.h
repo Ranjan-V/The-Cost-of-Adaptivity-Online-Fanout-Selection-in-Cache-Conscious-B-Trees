@@ -168,7 +168,6 @@ private:
     std::atomic<uint64_t> total_accesses_;
     std::atomic<uint64_t> sampled_accesses_;
 
-    size_t window_size_;
     double alpha_;
     double effective_alpha_;
     double decay_factor_;
@@ -183,13 +182,15 @@ public:
                            double decay_factor = 0.99)
         : total_accesses_(0)
         , sampled_accesses_(0)
-        , window_size_(window_size == 0 ? 1 : window_size)
         , alpha_(clamp_probability(alpha, 0.1))
         , effective_alpha_(alpha_)
         , decay_factor_(clamp_probability(decay_factor, 0.99))
         , sampling_rate_(sampling_rate == 0 ? 1 : sampling_rate)
         , hot_threshold_(0.7)
         , cold_threshold_(0.3) {
+        // Retain the legacy constructor parameter without pretending that the
+        // sampled EMA is a fixed-size window.
+        (void)window_size;
         effective_alpha_ = 1.0 - std::pow(1.0 - alpha_,
                                           static_cast<double>(sampling_rate_));
         effective_alpha_ = clamp_probability(effective_alpha_, alpha_);

@@ -1,0 +1,69 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 16, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/codespaces/${presetName}",
+      "cacheVariables": {
+        "BUILD_TESTING": "ON",
+        "CABTREE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "gcc-release",
+      "inherits": "base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "CMAKE_CXX_COMPILER": "g++" }
+    },
+    {
+      "name": "clang-release",
+      "inherits": "base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "CMAKE_CXX_COMPILER": "clang++" }
+    },
+    {
+      "name": "gcc-debug",
+      "inherits": "base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug", "CMAKE_CXX_COMPILER": "g++" }
+    },
+    {
+      "name": "clang-debug",
+      "inherits": "base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug", "CMAKE_CXX_COMPILER": "clang++" }
+    },
+    {
+      "name": "asan-ubsan",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CABTREE_SANITIZER": "address-undefined"
+      }
+    },
+    {
+      "name": "tsan",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CABTREE_SANITIZER": "thread"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "gcc-release", "configurePreset": "gcc-release" },
+    { "name": "clang-release", "configurePreset": "clang-release" },
+    { "name": "gcc-debug", "configurePreset": "gcc-debug" },
+    { "name": "clang-debug", "configurePreset": "clang-debug" },
+    { "name": "asan-ubsan", "configurePreset": "asan-ubsan" },
+    { "name": "tsan", "configurePreset": "tsan", "targets": ["test_btree_concurrent_correctness"] }
+  ],
+  "testPresets": [
+    { "name": "gcc-release", "configurePreset": "gcc-release", "output": { "outputOnFailure": true } },
+    { "name": "clang-release", "configurePreset": "clang-release", "output": { "outputOnFailure": true } },
+    { "name": "gcc-debug", "configurePreset": "gcc-debug", "output": { "outputOnFailure": true } },
+    { "name": "clang-debug", "configurePreset": "clang-debug", "output": { "outputOnFailure": true } },
+    { "name": "asan-ubsan", "configurePreset": "asan-ubsan", "output": { "outputOnFailure": true } }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Cache-Adaptive B-Tree Validation",
+  "image": "mcr.microsoft.com/devcontainers/cpp:ubuntu-24.04",
+  "features": {},
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-vscode.cpptools", "ms-vscode.cmake-tools"]
+    }
+  },
+  "remoteUser": "vscode"
+}

@@ -10,6 +10,7 @@
 #include <chrono>
 #include <cstddef>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 #include <type_traits>
 #include <unordered_map>
@@ -788,9 +789,9 @@ private:
 
     void rebuild_segment(Segment& segment, size_t new_fanout) {
         const std::chrono::steady_clock::time_point started = std::chrono::steady_clock::now();
-        cabtree::BPlusTree<KeyType, ValueType>* rebuilt =
+        std::unique_ptr<cabtree::BPlusTree<KeyType, ValueType> > rebuilt(
             new cabtree::BPlusTree<KeyType, ValueType>(
-                static_cast<int>(new_fanout));
+                static_cast<int>(new_fanout)));
 
         for (typename std::unordered_map<KeyType, ValueType>::const_iterator it =
                  segment.records.begin();
@@ -800,7 +801,7 @@ private:
         }
 
         delete segment.tree;
-        segment.tree = rebuilt;
+        segment.tree = rebuilt.release();
         segment.current_fanout = new_fanout;
         ++segment.restructures;
         segment.last_restructure_access = segment.access_count;
