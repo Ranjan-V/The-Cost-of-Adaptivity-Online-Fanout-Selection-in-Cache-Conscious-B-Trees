@@ -1,6 +1,12 @@
 # When Does Online Fanout Adaptation Pay? Artifact
 
-VALIDATION_STATUS: PARTIAL. The 1,080-run static opportunity campaign,
+VALIDATION_STATUS: PARTIAL. GCC, Clang, ASan/UBSan/LSan, and deterministic
+post-join concurrent correctness passed in Codespaces. TSan exposed a genuine
+race in concurrent structural insertion. The supported concurrency scope is
+now restricted to a preloaded, topology-immutable tree with point lookups and
+existing-value updates synchronized at the target leaf; its revised TSan gate
+must still be rerun. Concurrent insertion, splitting, removal, and adaptive
+replacement are unsupported. The 1,080-run static opportunity campaign,
 1,620-run dynamic screening campaign, and 1,740-run selected/oracle/Perfect
 campaign are archived as `results.zip`, `results-2.zip`, and
 `results-now-2.zip`. The 300 Perfect rows have been identity-, fingerprint-,

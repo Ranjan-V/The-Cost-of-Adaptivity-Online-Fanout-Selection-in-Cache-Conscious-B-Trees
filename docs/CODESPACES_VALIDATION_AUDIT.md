@@ -1,6 +1,6 @@
 # Codespaces Validation Audit
 
-Status: **IMPLEMENTED, NOT EXECUTED**.
+Status: **PARTIAL PASS; REVISED TSAN SCOPE NOT YET EXECUTED**.
 
 ## Targets and configurations
 
@@ -39,13 +39,18 @@ concurrent stages additionally emit a machine-readable CSV.
   legacy constructor parameter explicitly as ignored.
 - Made V1 replacement-tree construction exception-safe with `unique_ptr`.
 - Added quiescent structural validation and separator/leaf-chain checks.
-- The OLC reader accesses ordinary node fields concurrently with mutation.
-  Version validation may provide algorithmic retry behavior, but it does not
-  by itself prove freedom from C++ data races. TSan runtime confirmation is
-  mandatory before stronger wording.
+- The original optimistic reader accessed ordinary internal-node fields during
+  structural insertion and ordinary values during in-place update. TSan
+  confirmed the structural race; version retry does not legalize either race.
+- The supported API now assumes an immutable preloaded topology. Its concurrent
+  lookup traverses immutable internal nodes and acquires the target leaf lock
+  before reading keys or values. Existing-value updates acquire the same lock.
+- Concurrent insert/split, remove, clear, bulk load, and adaptive replacement
+  remain unsupported and must execute only while workers are quiescent.
 
 ## Runtime confirmation required
 
-Every preset, sanitizer result, concurrent outcome, compiler diagnostic, and
-devcontainer package availability remains `NOT_RUN`. Do not start scientific
-campaigns until `docs/VALIDATION_GATE.md` passes.
+Environment, GCC, Clang, ASan/UBSan/LSan, and the earlier deterministic
+post-join test passed. The revised supported-scope TSan test is `NOT_RUN`.
+Do not use historical thread-scaling numbers as evidence for the revised path
+until that path passes TSan and is benchmarked again.

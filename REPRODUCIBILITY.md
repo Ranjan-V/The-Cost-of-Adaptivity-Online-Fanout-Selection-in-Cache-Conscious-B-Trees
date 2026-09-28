@@ -1,9 +1,12 @@
 # Reproducibility map
 
-VALIDATION_STATUS: PARTIAL. Local single-thread correctness and the three
-archived Kaggle campaigns are complete. Perfect decomposition is verified from
-existing rows. Concurrent correctness, Clang/sanitizer validation, adaptive
-scale, and independent-platform replication remain pending.
+VALIDATION_STATUS: PARTIAL. GCC 13.3, Clang 18, and ASan/UBSan/LSan passed all
+11 registered tests in Codespaces. Deterministic post-join concurrency checks
+passed, but TSan exposed a genuine concurrent structural-insert race. The
+revised gate covers only the supported preloaded lookup/existing-value-update
+scope and remains to be rerun. The three archived Kaggle campaigns are
+complete and Perfect decomposition is verified from existing rows. Adaptive
+scale and independent-platform replication remain pending.
 
 | Planned figure/table | Raw experiment | Config | Processing |
 |---|---|---|---|

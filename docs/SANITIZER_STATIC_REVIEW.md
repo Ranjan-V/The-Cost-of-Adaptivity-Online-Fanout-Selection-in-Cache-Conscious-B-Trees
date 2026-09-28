@@ -17,8 +17,10 @@ still require ASan/LSan confirmation.
 
 ## Runtime risks and limitations
 
-- Concurrent optimistic reads observe non-atomic node arrays and values while
-  writers may mutate them. ASan/UBSan cannot certify race freedom; use TSan.
+- The original optimistic path observed non-atomic node arrays and values while
+  writers mutated them. The supported preloaded path now keeps topology
+  immutable and locks the target leaf for both value reads and updates. TSan
+  confirmation of that revised path remains required.
 - `remove()` deletes a value after locking its leaf, while an optimistic reader
   may have observed that value pointer. Concurrent delete is outside the
   prepared test and must not be claimed safe.

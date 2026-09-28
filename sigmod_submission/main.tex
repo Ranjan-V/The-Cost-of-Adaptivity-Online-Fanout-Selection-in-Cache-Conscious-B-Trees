@@ -52,8 +52,8 @@ We compare them against static fanouts, segmented static trees, and oracle
 baselines that know workload phase boundaries.  Our finding is negative but
 diagnostic: the oracle benefit of changing fanout is usually smaller than the
 measured cost of monitoring, records metadata, policy checks, and rebuilds.
-We evaluate a production-grade baseline scaling to 31.7M ops/sec and
-demonstrate that under rapidly shifting temporal skew, segmented adaptation
+We evaluate a research prototype and demonstrate that under rapidly shifting
+temporal skew, segmented adaptation
 achieves only \(0.63\times\) the throughput of a static baseline, confirming
 our theoretical break-even model.
 On five-trial YCSB experiments, segmented adaptation reaches only
@@ -130,10 +130,11 @@ and rebuilding.  In our in-memory setting these costs are comparable to, and
 often larger than, the entire fanout-selection benefit.  The result is that the
 adaptive variants lose even when the oracle proves that a better fanout exists.
 
-We also stress-test the implementation as a systems artifact.  The baseline
-B+ tree uses optimistic lock coupling and scales from 3.14M ops/sec on one
-thread to 31.7M ops/sec on 32 worker threads for a one-million-key,
-ten-million-operation workload.  Under rapidly shifting temporal skew, where
+We also delimit the implementation's concurrency boundary.  Its supported
+multi-threaded mode preloads the tree, keeps topology immutable, and permits
+point lookups and updates of existing values under per-leaf synchronization.
+Concurrent structural insertion, deletion, and adaptive replacement are not
+supported.  Under rapidly shifting temporal skew, where
 the hot 20\% of keys moves every one million operations, segmented adaptation
 achieves only \(0.63\times\) the throughput of the static baseline.  This
 front-page result is the empirical counterpart of our break-even model:
@@ -143,7 +144,7 @@ metadata, policy, and restructuring costs.
 This paper makes five contributions.
 
 \begin{enumerate}
-  \item We implement production-style adaptive B-tree variants, including
+  \item We implement research-prototype adaptive B-tree variants, including
   reinforcement-learning, regression, ant-colony-inspired, and segmented
   adaptive policies.
   \item We add oracle baselines that quantify the best possible benefit from
@@ -335,55 +336,40 @@ simple enough to isolate fanout effects, yet complete enough to preserve
 standard B+ tree invariants.  The default static configuration uses fanout 64;
 additional static baselines use fanouts 8, 16, 32, 128, and 256.
 
-\subsection{Optimistic Lock Coupling}
+\subsection{Concurrency Boundary for Preloaded Trees}
 
-To make the baseline credible under concurrent access, each node stores an
-atomic version word.  Even versions denote stable nodes; odd versions denote a
-writer-owned node.  Readers do not acquire latches.  Instead, they read a
-node's version, inspect its keys and child pointer, and validate that the
-version is unchanged before moving on.  A failed validation restarts the
-lookup from the current root.  Writers acquire a node by atomically changing an
-even version to the following odd version and release it by incrementing the
-version again.  Algorithm~\ref{alg:olc-lookup} shows the lookup path.
+The supported concurrent mode has an explicit precondition: all keys are
+loaded before worker threads begin, and no operation changes tree topology.
+Internal keys and child pointers are therefore immutable during the run.
+Point lookup traverses those immutable nodes, acquires the target leaf's
+version lock, reads its keys and value, and releases the lock.  Updates of
+existing values acquire the same leaf lock.  Algorithm~\ref{alg:preloaded-lookup}
+shows this restricted lookup path.
 
 \begin{algorithm}[t]
-\caption{Optimistic lock-coupled point lookup}
-\label{alg:olc-lookup}
+\caption{Point lookup for a preloaded, topology-immutable tree}
+\label{alg:preloaded-lookup}
 \begin{algorithmic}[1]
 \Require Search key $k$
 \Ensure Found value or \textsc{NotFound}
-\Repeat
-  \State $r \gets$ current root pointer
-  \State $n \gets r$; $\mathit{restart}\gets\textsc{false}$
+  \State $n \gets$ current root pointer
   \While{$n$ is not a leaf}
-    \State $v \gets n.\mathit{version}$
-    \If{$v$ is odd}
-      \State $\mathit{restart}\gets\textsc{true}$; \textbf{break}
-    \EndIf
     \State $i \gets$ first slot with $k < n.\mathit{keys}[i]$
-    \State $c \gets n.\mathit{children}[i]$
-    \If{$n.\mathit{version}\ne v$}
-      \State $\mathit{restart}\gets\textsc{true}$; \textbf{break}
-    \EndIf
-    \State $n \gets c$
+    \State $n \gets n.\mathit{children}[i]$
   \EndWhile
-  \If{\textbf{not} $\mathit{restart}$ and $r$ is still the root}
-    \State $v \gets n.\mathit{version}$
-    \If{$v$ is odd} \State \textbf{continue} \EndIf
-    \State scan leaf $n$ for key $k$
-    \If{$n.\mathit{version}=v$}
-      \State \Return matching value or \textsc{NotFound}
-    \EndIf
-  \EndIf
-\Until{lookup validates}
+  \State acquire $n.\mathit{versionLock}$
+  \State scan leaf $n$ and copy the matching value, if present
+  \State release $n.\mathit{versionLock}$
+  \State \Return copied value or \textsc{NotFound}
 \end{algorithmic}
 \end{algorithm}
 
-The same version word is used for updates.  The evaluated scalability benchmark
-uses a preloaded tree and a 95\% read / 5\% update workload, so most updates
-overwrite existing values and acquire only the target leaf.  Structural splits
-acquire the root-to-leaf path in top-down order, publish new nodes, and then
-release versions in reverse order.
+The same version word protects in-place updates.  A ThreadSanitizer diagnostic
+showed that the earlier optimistic traversal was not C++-memory-model safe
+during structural insertion: a version retry after reading ordinary keys or
+pointers cannot legalize the preceding race.  We therefore do not claim
+concurrent insert, split, merge, deletion, or adaptive replacement.  These
+operations require quiescence in the artifact.
 
 \subsection{Monitoring}
 
@@ -620,8 +606,10 @@ costs without assuming every adjacent difference is statistically separable.
 
 \textbf{Concurrent workload.}  A preloaded one-million-key tree
 executes ten million operations with 95\% reads and 5\% in-place updates at 1,
-4, 8, 16, and 32 worker threads.  This workload evaluates the OLC baseline,
-not concurrent segment replacement.
+4, 8, 16, and 32 worker threads.  The revised implementation restricts this
+workload to immutable topology and leaf-synchronized point reads and
+existing-value updates; fresh performance measurements are pending.  It does
+not evaluate concurrent structural mutation or segment replacement.
 
 \textbf{Sliding hotspot.}  Five one-million-operation windows each direct
 80\% of accesses to a disjoint 20\% range of a one-million-key domain.  The
@@ -849,54 +837,24 @@ Zipf-B & 1.01 & 0.85 & 0.97 & 1.07 & 0.81 & 0.88 & 5.68M \(\pm\) 0.42M \\
 \end{tabular}}
 \end{table*}
 
-\subsection{Concurrent Lookup Scalability}
+\subsection{Concurrent Validation Boundary}
 
-The original prototype was single-threaded.  To test whether the baseline can
-serve as a credible systems artifact, we added optimistic lock coupling to the
-B+ tree.  Each node stores an atomic version word; readers validate versions
-before and after traversal, while writers acquire per-node version locks.  The
-thread benchmark preloads one million keys and executes ten million operations
-with 95\% reads and 5\% updates.  Figure~\ref{fig:threads} and
-Table~\ref{tab:threads} show that the baseline scales to the 16 hardware
-threads of our i5-12500H and flattens under oversubscription at 32 worker
-threads.  This result does not reverse the adaptive-index conclusion, but it
-removes a major systems concern: the static baseline is not protected by a
-single global lock.
+The concurrency experiment is restricted to a tree preloaded before workers
+start.  Workers issue point lookups and updates of existing values; they do not
+insert new keys or trigger splits, merges, deletion, or replacement.  A
+ThreadSanitizer diagnostic found a genuine race in an earlier structural
+insert test: an optimistic reader examined ordinary internal-node fields while
+a writer modified them.  The subsequent version check did not make that access
+legal under the C++ memory model.
 
-Scaling is sublinear but substantial: 16 threads deliver \(9.64\times\)
-speedup, or 60\% parallel efficiency, and 32 workers reach
-\(10.11\times\).  The small increase from 16 to 32 is consistent with running
-twice as many workers as hardware threads and with contention from the 5\%
-update share.  Because this is a single campaign, the exact peak should not be
-read as a population estimate; its role is architectural validation that
-readers traverse without a global latch.
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_thread_scalability.pdf}
-  \caption{Optimistic lock coupling scalability on a one-million-key tree and
-  ten-million-operation workload.}
-  \Description{Line chart showing throughput and speedup as worker threads
-  increase from 1 to 32.}
-  \label{fig:threads}
-\end{figure}
-
-\begin{table}[t]
-\centering
-\caption{Thread-scalability benchmark, 95\% reads and 5\% updates.}
-\label{tab:threads}
-\begin{tabular}{rrr}
-\toprule
-Threads & Throughput & Speedup \\
-\midrule
-1 & 3.14M & 1.00 \\
-4 & 9.63M & 3.07 \\
-8 & 17.48M & 5.57 \\
-16 & 30.21M & 9.64 \\
-32 & 31.70M & 10.11 \\
-\bottomrule
-\end{tabular}
-\end{table}
+The revised supported path traverses immutable internal nodes and acquires the
+target leaf lock before reading keys or values.  Existing-value updates use the
+same lock.  Deterministic validation checks the exact final state, key count,
+checksum, lookups, ranges, structural invariants, and unexpected misses for
+read-only, update-only, and mixed workloads.  We do not report the earlier
+thread-throughput measurements because they used the superseded optimistic
+value-read path.  Fresh scalability measurements require a clean TSan result
+for the revised path and are outside the evidence reported here.
 
 \subsection{Rapidly Shifting Hotspots}
 
@@ -1089,20 +1047,17 @@ conflate these cases; oracle and ablation rows make the diagnosis actionable.
 
 \subsection{Memory Reclamation and Reader Safety}
 
-Optimistic reads raise a standard systems question: if readers traverse
-without latches, when is it safe to reclaim old nodes?  The implementation
-used for the concurrency benchmark avoids unsafe reclamation in two ways.
-First, the benchmark preloads the tree and then executes lookups and in-place
-updates; updates overwrite existing values and do not delete nodes.  Second,
-structural splits are publication-only: a split allocates a new node and links
-it into the tree, while the old node remains valid.  The tree is destroyed
-only after all worker threads have joined.  Thus a reader that validates an
-old version can safely retry without dereferencing freed memory.
+The supported concurrent mode avoids reclamation by construction.  It preloads
+the tree before workers start, keeps topology immutable, performs only lookups
+and existing-value updates, and destroys the tree only after workers join.
+Leaf readers and value writers synchronize on the same version lock.  This
+restricted mode does not support concurrent insertion, splitting, merging,
+deletion, or node reclamation.
 
 Segment rebuilds for adaptive fanout are more subtle.  In the current
 experiments, segmented rebuilds are evaluated in the single-threaded adaptive
 benchmarks, not concurrently with the multi-threaded lookup benchmark.  A
-fully concurrent adaptive tree should retire replaced segment roots using
+concurrent adaptive tree would need to retire replaced segment roots using
 epoch-based reclamation: each worker publishes its active epoch before
 traversal, writers place old roots on a retire list, and a retired tree is
 freed only after all active readers have advanced beyond the retire epoch.
@@ -1350,9 +1305,12 @@ to point reads and updates does not reproduce a complete database workload.
 design, not a lower bound over every possible adaptive B-tree.  V1 uses a full
 shadow map and insertion-based rebuild; V2 removes that map, bounds its monitor,
 and bulk-loads from a sorted export.  V2 still performs a full-segment copy and
-uses a heuristic, uncalibrated cost gate.  The concurrency experiment validates
-the static OLC tree; concurrent adaptive replacement and epoch reclamation are
-not implemented.  The negative claim is therefore specific and testable: on
+uses a heuristic, uncalibrated cost gate.  Concurrent execution is restricted
+to a preloaded, topology-immutable tree with leaf-synchronized lookups and
+existing-value updates.  Concurrent structural mutation, adaptive replacement,
+and epoch reclamation are not implemented.  Earlier concurrency throughput
+results used a superseded optimistic value-read path and are not included as
+validated evidence.  The negative claim is therefore specific and testable: on
 these two implementation variants and these in-memory workloads, measured
 recurring cost exceeds or consumes the available oracle headroom.  The
 analytical condition identifies what a different design must improve to

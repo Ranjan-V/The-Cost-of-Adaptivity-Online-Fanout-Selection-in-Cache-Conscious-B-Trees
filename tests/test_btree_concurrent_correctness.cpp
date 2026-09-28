@@ -46,6 +46,18 @@ uint64_t checksum(const std::vector<std::pair<int, int> >& records) {
     return hash;
 }
 
+std::vector<std::pair<int, int> > expected_values(int offset) {
+    std::vector<std::pair<int, int> > expected;
+    expected.reserve(kKeys);
+    for (int key = 0; key < kKeys; ++key)
+        expected.push_back(std::make_pair(key, offset + key));
+    return expected;
+}
+
+void preload(cabtree::BPlusTree<int, int>& tree) {
+    for (int key = 0; key < kKeys; ++key) tree.insert(key, key);
+}
+
 Outcome verify(cabtree::BPlusTree<int, int>& tree,
                const std::vector<std::pair<int, int> >& expected,
                const std::string& operation, size_t concurrent_misses) {
@@ -54,6 +66,7 @@ Outcome verify(cabtree::BPlusTree<int, int>& tree,
     out.expected_count = expected.size();
     out.observed_count = tree.size();
     out.misses = concurrent_misses;
+    require(out.misses == 0, operation + ": unexpected concurrent miss");
     std::string reason;
     out.invariants = tree.validate_invariants(&reason);
     require(out.invariants, operation + ": " + reason);
@@ -86,74 +99,81 @@ Outcome verify(cabtree::BPlusTree<int, int>& tree,
     return out;
 }
 
-Outcome disjoint_inserts() {
+Outcome preloaded_read_only() {
     cabtree::BPlusTree<int, int> tree(64);
+    preload(tree);
     std::atomic<int> ready(0); std::atomic<bool> start(false);
+    std::atomic<size_t> misses(0);
     std::vector<std::thread> threads;
     for (int worker = 0; worker < kThreads; ++worker) {
         threads.push_back(std::thread([&, worker]() {
             wait_for_start(ready, start);
-            const int begin = worker * (kKeys / kThreads);
-            const int end = begin + kKeys / kThreads;
-            for (int key = begin; key < end; ++key) tree.insert(key, key * 3 + 1);
+            for (int pass = 0; pass < 4; ++pass) {
+                for (int key = worker; key < kKeys; key += kThreads) {
+                    int value = 0;
+                    if (!tree.search_preloaded_concurrent(key, value) || value != key)
+                        misses.fetch_add(1, std::memory_order_relaxed);
+                }
+            }
         }));
     }
     while (ready.load(std::memory_order_acquire) != kThreads) std::this_thread::yield();
     start.store(true, std::memory_order_release);
     for (size_t i = 0; i < threads.size(); ++i) threads[i].join();
-    std::vector<std::pair<int, int> > expected;
-    for (int key = 0; key < kKeys; ++key) expected.push_back(std::make_pair(key, key * 3 + 1));
-    return verify(tree, expected, "disjoint-inserts", 0);
+    return verify(tree, expected_values(0), "preloaded-read-only", misses.load());
 }
 
-Outcome disjoint_updates() {
+Outcome preloaded_disjoint_updates() {
     cabtree::BPlusTree<int, int> tree(64);
-    for (int key = 0; key < kKeys; ++key) tree.insert(key, key);
+    preload(tree);
     std::atomic<int> ready(0); std::atomic<bool> start(false);
+    std::atomic<size_t> misses(0);
     std::vector<std::thread> threads;
     for (int worker = 0; worker < kThreads; ++worker) {
         threads.push_back(std::thread([&, worker]() {
             wait_for_start(ready, start);
             for (int key = worker; key < kKeys; key += kThreads)
-                tree.insert(key, 1000000 + key);
+                if (!tree.update_preloaded_concurrent(key, 1000000 + key))
+                    misses.fetch_add(1, std::memory_order_relaxed);
         }));
     }
     while (ready.load(std::memory_order_acquire) != kThreads) std::this_thread::yield();
     start.store(true, std::memory_order_release);
     for (size_t i = 0; i < threads.size(); ++i) threads[i].join();
-    std::vector<std::pair<int, int> > expected;
-    for (int key = 0; key < kKeys; ++key) expected.push_back(std::make_pair(key, 1000000 + key));
-    return verify(tree, expected, "disjoint-updates", 0);
+    return verify(tree, expected_values(1000000), "preloaded-disjoint-updates",
+                  misses.load());
 }
 
-Outcome controlled_read_update() {
+Outcome preloaded_read_update() {
     cabtree::BPlusTree<int, int> tree(64);
-    for (int key = 0; key < kKeys; ++key) tree.insert(key, key);
+    preload(tree);
     std::atomic<int> ready(0); std::atomic<bool> start(false);
     std::atomic<size_t> misses(0);
     std::vector<std::thread> threads;
     for (int worker = 0; worker < 2; ++worker) {
         threads.push_back(std::thread([&, worker]() {
             wait_for_start(ready, start);
-            for (int key = worker; key < kKeys; key += 2) tree.insert(key, 2000000 + key);
+            for (int key = worker; key < kKeys; key += 2)
+                if (!tree.update_preloaded_concurrent(key, 2000000 + key))
+                    misses.fetch_add(1, std::memory_order_relaxed);
         }));
     }
     for (int reader = 0; reader < 2; ++reader) {
         threads.push_back(std::thread([&, reader]() {
             wait_for_start(ready, start);
-            for (int pass = 0; pass < 4; ++pass)
+            for (int pass = 0; pass < 4; ++pass) {
                 for (int key = reader; key < kKeys; key += 2) {
                     int value = 0;
-                    if (!tree.search(key, value)) misses.fetch_add(1, std::memory_order_relaxed);
+                    if (!tree.search_preloaded_concurrent(key, value))
+                        misses.fetch_add(1, std::memory_order_relaxed);
                 }
+            }
         }));
     }
     while (ready.load(std::memory_order_acquire) != kThreads) std::this_thread::yield();
     start.store(true, std::memory_order_release);
     for (size_t i = 0; i < threads.size(); ++i) threads[i].join();
-    std::vector<std::pair<int, int> > expected;
-    for (int key = 0; key < kKeys; ++key) expected.push_back(std::make_pair(key, 2000000 + key));
-    return verify(tree, expected, "controlled-read-update", misses.load());
+    return verify(tree, expected_values(2000000), "preloaded-read-update", misses.load());
 }
 
 std::string compiler_name() {
@@ -192,14 +212,14 @@ void write_evidence(const std::string& path, const std::vector<Outcome>& rows) {
             << ',' << (row.range ? "RANGE_CHECK_OK" : "FAIL") << ",PASS\n";
     }
 }
-} // namespace
+}  // namespace
 
 int main(int argc, char** argv) {
     try {
         std::vector<Outcome> rows;
-        rows.push_back(disjoint_inserts());
-        rows.push_back(disjoint_updates());
-        rows.push_back(controlled_read_update());
+        rows.push_back(preloaded_read_only());
+        rows.push_back(preloaded_disjoint_updates());
+        rows.push_back(preloaded_read_update());
         if (argc > 1) write_evidence(argv[1], rows);
         std::cout << "FINAL_STATE_REFERENCE_MATCH\nSTRUCTURAL_INVARIANTS_OK\n"
                      "LOOKUP_CHECK_OK\nRANGE_CHECK_OK\n";

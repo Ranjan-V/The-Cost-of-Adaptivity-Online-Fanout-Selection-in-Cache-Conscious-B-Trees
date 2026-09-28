@@ -11,10 +11,11 @@ timestamped `results/validation/` directories.
   errors, and zero unexplained leaks.
 - **Semantic identity PASS:** the deterministic STATIC/V1/V2 replay reports
   zero misses and matching checksums, sizes, and final range contents.
-- **Concurrent correctness PASS:** every scenario reports expected count,
+- **Concurrent correctness PASS:** on a preloaded, topology-immutable tree,
+  every read-only, existing-value-update, and mixed read/update scenario reports expected count,
   matching checksum, zero expected misses, structural invariants, reference
   match, lookup check, and range check; no crash, deadlock, or timeout.
-- **TSan PASS:** no data-race report in the controlled concurrent scenarios.
+- **TSan PASS:** no data-race report in those supported preloaded scenarios.
   If the runtime is unavailable, record `UNSUPPORTED` with its log. Unsupported
   is not PASS and blocks strong thread-safety claims.
 
@@ -24,3 +25,6 @@ Stop before scientific benchmarks on any GCC/Clang failure, sanitizer error,
 unexplained leak, TSan race, checksum or miss mismatch, invariant or reference
 failure, deadlock, crash, bulk-loader discrepancy, or V1/V2 semantic mismatch.
 Do not weaken flags, skip tests, or suppress findings to cross the gate.
+
+Concurrent structural insertion, splitting, removal, and adaptive replacement
+are explicitly outside this gate and outside the supported concurrent API.

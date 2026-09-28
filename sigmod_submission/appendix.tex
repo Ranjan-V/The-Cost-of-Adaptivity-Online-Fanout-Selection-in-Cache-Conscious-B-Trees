@@ -184,15 +184,16 @@ using Student's $t$ distribution with four degrees of freedom.
 
 \section{Reader Safety Boundary}
 
-The concurrent scalability experiment preloads the tree and then executes
-lookups and in-place updates.  Existing-value updates do not delete nodes.
-Structural splits publish new nodes while retaining old nodes until all worker
-threads join, so an optimistic reader can safely validate and retry without
-accessing reclaimed memory.  Concurrent segment replacement is outside that
-experiment: the adaptive rebuild measurements are single-threaded.  A fully
-concurrent adaptive implementation would require epoch-based reclamation (or
-an equivalent safe-memory-reclamation mechanism), adding another online cost
-to the break-even model.
+The supported concurrent experiment preloads the tree and then executes
+lookups and updates of existing values while topology remains immutable.
+Readers and updaters synchronize on the target leaf's version lock.  Concurrent
+insertion, splitting, merging, deletion, and segment replacement are outside
+the supported scope.  A prior structural-insert diagnostic produced a genuine
+ThreadSanitizer race; a later version check cannot legalize ordinary fields
+read concurrently with writes.  General concurrent structural mutation would
+require a different synchronization design and safe memory reclamation.  The
+prepared validation checks deterministic final state and does not claim
+linearizability.
 
 \section*{Generative AI Disclosure}
 Large language models were used to assist with code scaffolding and

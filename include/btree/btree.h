@@ -36,8 +36,14 @@ public:
     explicit BPlusTree(int fanout = 64);
     ~BPlusTree();
     
+    // General mutation API; callers must exclude concurrent topology changes.
     bool insert(const Key& key, const Value& value);
     bool search(const Key& key, Value& value) const;
+    // Concurrent-safe only while topology is immutable: preload all keys,
+    // then permit point lookups and updates of existing values. Structural
+    // insert, remove, clear, bulk load, and rebuild must remain quiescent.
+    bool search_preloaded_concurrent(const Key& key, Value& value) const;
+    bool update_preloaded_concurrent(const Key& key, const Value& value);
     bool remove(const Key& key);
     std::vector<Value> range_query(const Key& start, const Key& end) const;
     // Caller must exclude concurrent writers while exporting or replacing a tree.
@@ -297,6 +303,33 @@ bool BPlusTree<Key, Value>::search(const Key& key, Value& value) const {
             return found;
         }
     }
+}
+
+template<typename Key, typename Value>
+bool BPlusTree<Key, Value>::search_preloaded_concurrent(const Key& key,
+                                                        Value& value) const {
+    Node* leaf = find_leaf(key);
+    if (!leaf) {
+        return false;
+    }
+
+    lock_node(leaf);
+    bool found = false;
+    for (int i = 0; i < leaf->num_keys; ++i) {
+        if (leaf->keys[i] == key) {
+            value = *static_cast<Value*>(leaf->pointers[i]);
+            found = true;
+            break;
+        }
+    }
+    unlock_node(leaf);
+    return found;
+}
+
+template<typename Key, typename Value>
+bool BPlusTree<Key, Value>::update_preloaded_concurrent(const Key& key,
+                                                        const Value& value) {
+    return update_existing_locked(key, value);
 }
 
 template<typename Key, typename Value>

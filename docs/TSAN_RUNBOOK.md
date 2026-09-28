@@ -9,7 +9,7 @@ Dry-run first:
 bash scripts/linux/run_codespaces_validation.sh --dry-run tsan
 ```
 
-Then run only the controlled concurrent correctness target:
+Then run only the supported preloaded lookup/existing-value-update target:
 
 ```bash
 bash scripts/linux/run_codespaces_validation.sh tsan
@@ -21,3 +21,8 @@ benchmark. A race report, deadlock, crash, missing CSV, nonzero exit, or failed
 reference/invariant field is a STOP condition. Do not suppress a report merely
 to obtain green CI. If the Codespaces Clang runtime cannot support TSan, retain
 the exact error log and classify the gate `UNSUPPORTED`, never `PASS`.
+
+The earlier structural-insert diagnostic produced a genuine race between
+`insert_in_node` and `find_leaf_optimistic`. Structural mutation is therefore
+unsupported concurrently and is deliberately absent from the supported TSan
+gate; this is scope restriction, not suppression of the finding.

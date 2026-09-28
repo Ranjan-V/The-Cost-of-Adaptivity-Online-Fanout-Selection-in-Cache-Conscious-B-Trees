@@ -145,11 +145,14 @@ void run_worker(WorkerContext* context) {
     for (size_t i = context->begin; i < context->end; ++i) {
         const TimedOperation& op = (*context->operations)[i];
         if (op.update) {
-            context->tree->insert(op.key, op.value);
+            if (!context->tree->update_preloaded_concurrent(op.key, op.value)) {
+                std::cerr << "Preloaded update missed key " << op.key << "\n";
+                std::exit(3);
+            }
             ++local_updates;
         } else {
             int value = 0;
-            if (context->tree->search(op.key, value)) {
+            if (context->tree->search_preloaded_concurrent(op.key, value)) {
                 local_checksum += value;
             }
             ++local_reads;
