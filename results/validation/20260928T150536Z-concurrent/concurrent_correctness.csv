@@ -1,0 +1,4 @@
+compiler,compiler_version,sanitizer_mode,thread_count,operation_type,seed,expected_key_count,observed_key_count,checksum_expected,checksum_observed,miss_count,invariant_status,reference_match,lookup_status,range_status,exit_status
+Clang,Ubuntu Clang 18.1.3 (1ubuntu1),none,4,preloaded-read-only,20260928,20000,20000,6418662548663552195,6418662548663552195,0,STRUCTURAL_INVARIANTS_OK,FINAL_STATE_REFERENCE_MATCH,LOOKUP_CHECK_OK,RANGE_CHECK_OK,PASS
+Clang,Ubuntu Clang 18.1.3 (1ubuntu1),none,4,preloaded-disjoint-updates,20260928,20000,20000,13695338292450809027,13695338292450809027,0,STRUCTURAL_INVARIANTS_OK,FINAL_STATE_REFERENCE_MATCH,LOOKUP_CHECK_OK,RANGE_CHECK_OK,PASS
+Clang,Ubuntu Clang 18.1.3 (1ubuntu1),none,4,preloaded-read-update,20260928,20000,20000,13004817288924504771,13004817288924504771,0,STRUCTURAL_INVARIANTS_OK,FINAL_STATE_REFERENCE_MATCH,LOOKUP_CHECK_OK,RANGE_CHECK_OK,PASS
