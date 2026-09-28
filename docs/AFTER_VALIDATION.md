@@ -1,8 +1,8 @@
 # Work After the Validation Gate
 
-Only after every mandatory gate in `VALIDATION_GATE.md` passes should the next
-scientific experiment begin: the adaptive scale campaign at 100K, 1M, and 5M
-records. The minimal variants are STATIC, ORACLE-ZERO-COST, PERFECT-V2, and
-ADAPT-V2, with ADAPT-V1 optional as a legacy reference. Existing scale config
-material should be reviewed rather than regenerated. No campaign is prepared
-or executed by this validation task.
+The mandatory gates in `VALIDATION_GATE.md` passed, and the frozen adaptive
+scale campaign at 100K, 1M, and 5M records is now complete and verified. It
+contains 300 runs (150 exact STATIC/ADAPT-V2 pairs), zero failures, zero
+partials, and zero misses. The next experimental priorities are one small
+independent-platform replication, followed by the phase-length/break-even
+campaign. Do not recreate the completed scale campaign.

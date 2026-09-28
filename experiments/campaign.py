@@ -43,6 +43,37 @@ def source_fingerprint(root):
     return h.hexdigest()[:20]
 
 
+def git_commit(root):
+    """Return archive-supplied or repository commit provenance."""
+    supplied = os.environ.get("CABTREE_GIT_COMMIT", "").strip()
+    if supplied:
+        return supplied
+    try:
+        return subprocess.check_output(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            stderr=subprocess.DEVNULL, text=True).strip()
+    except (OSError, subprocess.CalledProcessError):
+        return "UNAVAILABLE_IN_SOURCE_ARCHIVE"
+
+
+def append_csv_provenance(path, provenance):
+    """Append immutable campaign provenance before atomic publication."""
+    with path.open(newline="", encoding="utf-8") as stream:
+        reader = csv.DictReader(stream)
+        rows = list(reader)
+        fields = list(reader.fieldnames or [])
+    if len(rows) != 1:
+        raise ValueError("expected exactly one result row before publication: " + str(path))
+    for name, value in provenance.items():
+        if name not in fields:
+            fields.append(name)
+        rows[0][name] = value
+    with path.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
 def measured_phase_targets(path, p, repetition, machine, source_id, spec):
     """Resolve an offline oracle choice for exactly this measured run."""
     mix = p["read_update"] or spec.get("default_read_update", [0.95, 0.05])
@@ -140,6 +171,8 @@ def main():
         oracle_csv = Path(__file__).resolve().parents[1] / oracle_csv
     machine, details = machine_fingerprint()
     source_id = source_fingerprint(Path(__file__).resolve().parents[1]) if args.source_id == "AUTO" else args.source_id
+    repository_root = Path(__file__).resolve().parents[1]
+    commit = git_commit(repository_root)
     root = args.out_dir / machine / spec["family"]
     if args.execute:
         root.mkdir(parents=True, exist_ok=True)
@@ -147,7 +180,8 @@ def main():
         snapshot = {"machine_fingerprint": machine, "machine_components": details,
                     "source_id": source_id, "compiler_flags": os.environ.get("CABTREE_CXXFLAGS", "UNSUPPORTED"),
                     "ordering_seed": args.ordering_seed, "config": spec,
-                    "binary": str(args.binary), "cpu_model": details[-1] if sys.platform.startswith("linux") else platform.processor()}
+                    "binary": str(args.binary), "git_commit": commit,
+                    "cpu_model": details[-1] if sys.platform.startswith("linux") else platform.processor()}
         if oracle_csv is not None:
             if not oracle_csv.is_file():
                 raise SystemExit("measured phase-oracle CSV missing: " + str(oracle_csv))
@@ -202,6 +236,15 @@ def main():
                     failure.write_text(json.dumps({"run_id": run_id,
                         "reason": "phase sidecar missing", "log": str(log)}, indent=2))
                     raise SystemExit("phase output missing; inspect " + str(log))
+                provenance = {
+                    "git_commit": commit,
+                    "workload_family": spec.get("workload_family", "zipf"),
+                    "adapt_interval": spec.get("adapt_interval", 5000),
+                    "warmup": spec.get("warmup", 0),
+                    "latency_sampling_rate": spec.get("latency_sampling_rate", 128),
+                }
+                append_csv_provenance(partial, provenance)
+                append_csv_provenance(sidecar, provenance)
                 sidecar.replace(Path(str(output) + ".phases.csv"))
                 partial.replace(output)
     print("planned runs:", run_count)

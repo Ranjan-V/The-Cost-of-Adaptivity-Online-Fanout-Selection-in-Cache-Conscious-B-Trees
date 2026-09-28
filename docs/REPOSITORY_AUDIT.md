@@ -3,9 +3,10 @@
 AUDIT_STATUS: SOURCE INSPECTION COMPLETE. VALIDATION_STATUS: PARTIAL. The
 1,080-row static opportunity, 1,620-row dynamic screening, and 1,740-row
 selected/oracle/Perfect Kaggle campaigns are complete. The 300 Perfect rows
-are verified and analyzed. Adaptive scale, compiler/sanitizer validation and
-one independent-platform replication remain pending; hardware counters and ARM
-are not required by the smallest remaining plan.
+are verified and analyzed. Compiler/sanitizer validation and the 300-run
+adaptive-scale campaign are also complete; one independent-platform
+replication remains pending, followed by the phase-length/break-even campaign.
+Hardware counters and ARM are not required by the smallest remaining plan.
 
 ## Architecture
 
@@ -45,3 +46,8 @@ are not required by the smallest remaining plan.
   rebuild-accounting checks and are included in the paper. No
   other prepared campaign may be inserted until it is built, tested, checked
   for equivalent fingerprints/checksums, and run on the intended machine.
+
+- The adaptive-scale campaign contains 150 exact STATIC/ADAPT-V2 pairs across
+  100K, 1M, and 5M records. It passed archive identity, failure/partial,
+  workload-fingerprint, checksum, and miss checks and is included in the
+  manuscript. Historical oracle rows remain explicitly unpaired context.

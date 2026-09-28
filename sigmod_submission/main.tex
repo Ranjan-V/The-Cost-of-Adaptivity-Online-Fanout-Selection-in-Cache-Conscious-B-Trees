@@ -66,6 +66,10 @@ In a separate 1,740-run selected-regime campaign, a retrospective zero-cost
 oracle reaches \(1.029\)--\(1.041\times\) static throughput, while the best
 cost-aware adaptive configuration reaches only \(0.881\)--\(0.931\times\);
 all paired 95\% bootstrap intervals exclude parity.
+Across a further 300-run scale campaign, Adaptive V2 improves from
+\(0.848\times\) static throughput at 100K records to \(0.926\times\) at 5M,
+but every paired 95\% interval remains below parity.  At 1M and 5M it performs
+no rebuilds, isolating recurring online overhead as the residual cost.
 
 We derive a simple break-even model showing that adaptation can win only when
 per-operation fanout benefit exceeds monitoring, metadata, and policy cost,
@@ -536,6 +540,7 @@ Parameter & Setting \\
 Local compiler / platform & GCC 6.3.0 / Windows 11 \\
 Local machine & ASUS i5-12500H, 16 threads, 16 GiB \\
 Selected campaign & Kaggle Xeon, 4 vCPU, GCC 11.4.0 \\
+Scale campaign & Kaggle Xeon, 4 vCPU, GCC 11.4.0 \\
 Default / candidate fanouts & 64 / 8--256 \\
 Segments / sampling & 8 / V1: 1/10; V2: 1/16--1/64 \\
 Adaptation interval & 5,000 accesses \\
@@ -545,6 +550,7 @@ Shifting operations / phase & 30K \\
 Repeated trials & 5 \\
 Thread records / operations & 1M / 10M \\
 Sliding windows & $5\times1$M operations \\
+Scale records / operations & 100K--5M / 1M \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -616,6 +622,12 @@ not evaluate concurrent structural mutation or segment replacement.
 operation mix is 95\% reads and 5\% updates.  This tests whether the control
 loop safely reacts when old evidence becomes stale at every window boundary.
 
+\textbf{Scale sensitivity.}  A separate stationary-Zipf campaign compares
+Static fanout 64 with Adaptive V2 at 100K, 1M, and 5M records.  At each scale,
+five seeds and ten repetitions yield 50 exact seed/repetition pairs.  Each run
+uses one million measured operations, a 95/5 read/update mix, sample rate 1/32,
+and the same eight-segment V2 implementation and six fanout candidates.
+
 \subsection{Measurement and Statistical Treatment}
 
 For each workload, the operation sequence is generated once from a fixed seed
@@ -646,7 +658,10 @@ within-machine ratios and do not pool absolute throughput across hosts.
 The local YCSB, shifting, Wikipedia, ablation, concurrency, and sliding-hotspot
 results therefore refer to the ASUS i5-12500H/Windows platform; the broad and
 selected-regime campaigns, including Perfect, refer to the Kaggle Xeon/Linux
-platform and GCC 11.4.0.
+platform and GCC 11.4.0.  The scale campaign also uses that Kaggle
+Xeon/Linux toolchain, but is analyzed as a separate 300-run cohort identified
+by machine fingerprint \texttt{f410f7064c081e00}; absolute throughput is not
+pooled with earlier campaigns.
 
 \section{Results}
 
@@ -1004,6 +1019,44 @@ dominant loss to actuation, while also showing that conservative online control
 can be beneficial precisely by refusing an oracle-selected layout whose
 short-lived operation-only advantage cannot repay reconstruction.
 
+\subsection{Scale Sensitivity}
+
+Figure~\ref{fig:adaptive-scale} and Table~\ref{tab:adaptive-scale} report 150
+exact Static-f64/Adaptive-V2 pairs across three database sizes.  Adaptive V2
+moves toward parity as the database grows: its paired throughput ratio is
+\(0.848\times\) at 100K records, \(0.888\times\) at 1M, and \(0.926\times\)
+at 5M.  The corresponding 95\% hierarchical paired-bootstrap intervals are
+[0.839, 0.857], [0.877, 0.900], and [0.912, 0.940].  All remain below one, so
+V2 is significantly slower than Static f64 throughout the tested 100K--5M
+range, although the mean penalty narrows from approximately 15.2\% to 7.4\%.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/adaptive_scale.pdf}
+  \caption{Adaptive V2 throughput normalized to its exact paired Static-f64
+  run.  Error bars are 95\% hierarchical paired-bootstrap intervals; the
+  dashed line denotes parity.  The gap narrows with scale but remains
+  statistically below parity through 5M records.}
+  \Description{A three-point line plot rises from 0.848 at 100K records to
+  0.926 at 5M records.  All confidence intervals lie below the parity line.}
+  \label{fig:adaptive-scale}
+\end{figure}
+
+\input{tables/adaptive_scale.tex}
+
+Adaptive V2 performs one rebuild per run on average at 100K and zero rebuilds
+at both 1M and 5M.  Consequently, the residual large-scale penalty cannot be
+attributed to restructuring in those two cohorts; it is the recurring cost of
+monitoring, segment routing, and controller execution.  This agrees with the
+break-even model: increasing scale makes adaptation more competitive as fixed
+work is better amortized, but eliminating rebuild cost does not eliminate the
+online term \(\mu\).  Historical static-oracle sweeps show 4.3--5.8\% mean
+headroom across these sizes, but those measurements use a different source
+fingerprint and repetition structure.  We therefore report them only as
+unpaired context, not as exact comparisons to this scale cohort.  These data
+establish persistence, not asymptotic behavior: they do not determine whether
+V2 could reach parity beyond 5M records or on another platform or workload.
+
 \subsection{Cross-Workload Synthesis}
 
 Table~\ref{tab:synthesis} answers RQ1 and RQ2 in one view.  The opportunity
@@ -1198,6 +1251,12 @@ The first term is decision error; the latter two remain even under perfect
 prediction.  Our oracle measures the maximum amount available to pay all three
 terms, while the clean ablation estimates the recurring component.
 
+The scale experiment sharpens this decomposition.  At 1M and 5M records,
+\(R/T=0\) because V2 performs no rebuilds, yet its paired throughput remains
+\(0.888\times\) and \(0.926\times\) static.  Thus scale narrows the observed
+gap within the tested range, but the recurring term \(\mu\) remains large
+enough to prevent break-even even when measured restructuring cost vanishes.
+
 Figure~\ref{fig:benefit} compares measured headroom with measured penalty.  On
 YCSB-A, the adaptive penalty is approximately 0.048 \us/op; on YCSB-B and
 YCSB-C it is roughly 0.056 and 0.069 \us/op.  Current YCSB-A and YCSB-C have
@@ -1280,12 +1339,14 @@ the available layout benefit.
 
 \subsection{Threats to Validity}
 
-\textbf{Platform and scale.}  All measurements use one laptop-class Intel CPU,
-one compiler toolchain, and in-memory integer keys.  Different cache sizes,
-NUMA placement, allocators, or storage media can change both static fanout
-ordering and the relative cost of metadata.  The 100K-record experiments are
-not a claim about billion-key or disk-resident indexes; they characterize the
-sub-microsecond regime in which the proposed control loop is most constrained.
+\textbf{Platform and scale.}  Local experiments use an ASUS i5-12500H/Windows
+machine, while the selected and scale campaigns use a four-vCPU Kaggle
+Xeon/Linux instance and GCC 11.4.0.  We compare variants only within a machine
+and cohort.  Different cache sizes, NUMA placement, allocators, or storage
+media can change both static fanout ordering and the relative cost of metadata.
+The scale campaign extends the tested range to 5M in-memory integer keys, but
+does not establish asymptotic behavior or make a claim about billion-key or
+disk-resident indexes.
 
 \textbf{Causal mechanism.}  We attribute costs to software components through
 controlled configuration ablations and elapsed time.  The node-footprint
@@ -1372,6 +1433,9 @@ the benefit on our in-memory workloads.  A separate 1,740-run campaign
 confirms this result across selected seeds and sampling rates: even when a
 zero-cost oracle improves throughput, every paired interval for the best
 cost-aware adaptive configuration remains below static parity.
+The 300-run scale campaign further shows that V2 approaches parity from
+\(0.848\times\) at 100K to \(0.926\times\) at 5M records, yet remains below
+static throughout this range even when no rebuilds occur at 1M and 5M.
 
 The resulting lesson is constructive: adaptive index papers should measure
 oracle headroom and adaptation overhead together.  If the oracle cannot beat

@@ -1,0 +1,18 @@
+\begin{table}[t]
+  \centering
+  \caption{Adaptive V2 scale sensitivity.  Each row summarizes 50 exact
+  seed/repetition pairs; intervals are 95\% hierarchical paired-bootstrap
+  confidence intervals for the throughput ratio.}
+  \label{tab:adaptive-scale}
+  \small
+  \begin{tabular}{rrrrr}
+    \toprule
+    Records & Static & Adaptive V2 & V2/Static & Rebuilds \\
+            & (Mops/s) & (Mops/s) & (95\% CI) & (mean) \\
+    \midrule
+    100K & 5.85 & 4.96 & 0.848 [0.839, 0.857] & 1.0 \\
+    1M   & 3.39 & 3.00 & 0.888 [0.877, 0.900] & 0.0 \\
+    5M   & 2.45 & 2.27 & 0.926 [0.912, 0.940] & 0.0 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

@@ -12,6 +12,18 @@ STATUS: NOT_RUN. Upload `kaggle_upload.zip` yourself as a Kaggle dataset, then i
 
 Do not treat Kaggle as the controlled source for sub-microsecond latency claims. Preserve raw CSVs, logs, the notebook, and machine identity for each session.
 
+## Adaptive scale campaign
+
+The completed and verified scale campaign is documented in
+`docs/ADAPTIVE_SCALE_CAMPAIGN.md`. The instructions below are retained for
+artifact reproducibility; do not rerun the campaign for the current evidence.
+Package the committed source with `scripts/linux/package_adaptive_scale.sh`,
+upload `kaggle_upload_adaptive_scale.zip`, and import
+`kaggle/kaggle_adaptive_scale.ipynb`. Use accelerator None. The notebook dry
+runs the matrix and requires exactly 300 planned rows before its explicit
+execution cell. Its final cell produces `adaptive_scale_results.zip` and
+`adaptive_scale_resume.zip`.
+
 ## Stage 2: bounded dynamic screening
 
 Use `kaggle/kaggle_dynamic_screening.ipynb` with accelerator set to None. The
