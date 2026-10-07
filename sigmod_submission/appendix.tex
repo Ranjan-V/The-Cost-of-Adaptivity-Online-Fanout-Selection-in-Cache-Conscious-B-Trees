@@ -1,4 +1,4 @@
-% Separate, double-anonymous supplementary appendix for SIGMOD review.
+% Separate, double-anonymous supplementary material in the same ACM style.
 \documentclass[sigconf,review,anonymous]{acmart}
 
 \setcopyright{none}
@@ -6,20 +6,21 @@
 \acmYear{2027}
 \acmDOI{}
 \acmISBN{}
-\acmConference[SIGMOD '27]{ACM SIGMOD International Conference on Management of Data}{June 13--19, 2027}{Huntington Beach, CA, USA}
-\settopmatter{printacmref=false}
+\acmConference[Under Review]{Anonymous Data Management Conference Submission}{2027}{}
+\settopmatter{printacmref=true}
 
 \usepackage{amsmath}
 \usepackage{amsthm}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{booktabs}
+\usepackage{graphicx}
 
 \newtheorem{theorem}{Theorem}
 
 \begin{document}
 
-\title{Supplementary Appendix: The Cost of Adaptivity: Online Fanout Selection in Cache-Conscious B-Trees}
+\title{Supplementary Material: The Cost of Adaptivity: Online Fanout Selection in Cache-Conscious B-Trees}
 
 \author{Anonymous Author(s)}
 \affiliation{%
@@ -153,12 +154,15 @@ same keys and operation types.
 \centering
 \caption{Principal benchmark parameters.}
 \label{tab:parameters}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{ll}
 \toprule
 Parameter & Setting \\
 \midrule
 Language standard & C++11 \\
-Compiler & GCC 6.3.0 / MinGW \\
+Local compiler / platform & GCC 6.3.0 / Windows 11 \\
+Selected/scale campaigns & Kaggle Xeon / GCC 11.4.0 \\
+Phase-length campaign & Kaggle EPYC 7B12 / GCC 13.3.0 \\
 Default fanout & 64 \\
 Candidate fanouts & 8, 16, 32, 64, 128, 256 \\
 Segments & 8 equal key ranges \\
@@ -174,8 +178,12 @@ Thread counts & 1, 4, 8, 16, 32 \\
 Thread operation mix & 95\% reads, 5\% updates \\
 Sliding-hotspot windows & $5\times1{,}000{,}000$ operations \\
 Hot range per window & 20\% of key space \\
+Scale records & 100K, 1M, 5M \\
+Phase-study records / operations & 1M / 10M \\
+Phase lengths & 10K, 100K, 1M, 5M, 10M \\
 \bottomrule
 \end{tabular}
+}
 \end{table}
 
 Repeated-trial summaries report the arithmetic mean, sample standard
@@ -194,6 +202,24 @@ read concurrently with writes.  General concurrent structural mutation would
 require a different synchronization design and safe memory reclamation.  The
 prepared validation checks deterministic final state and does not claim
 linearizability.
+
+\begin{algorithm}[t]
+\caption{Point lookup for a preloaded, topology-immutable tree}
+\label{alg:preloaded-lookup-supp}
+\begin{algorithmic}[1]
+\Require Search key $k$
+\Ensure Found value or \textsc{NotFound}
+  \State $n \gets$ current root pointer
+  \While{$n$ is not a leaf}
+    \State $i \gets$ first slot with $k < n.\mathit{keys}[i]$
+    \State $n \gets n.\mathit{children}[i]$
+  \EndWhile
+  \State acquire $n.\mathit{versionLock}$
+  \State scan leaf $n$ and copy the matching value, if present
+  \State release $n.\mathit{versionLock}$
+  \State \Return copied value or \textsc{NotFound}
+\end{algorithmic}
+\end{algorithm}
 
 \section*{Generative AI Disclosure}
 Large language models were used to assist with code scaffolding and

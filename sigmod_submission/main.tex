@@ -1,4 +1,4 @@
-% Double-anonymous SIGMOD research-track submission.
+% Double-anonymous ACM-style data-management research submission.
 \documentclass[sigconf,review,anonymous]{acmart}
 
 \AtBeginDocument{%
@@ -9,7 +9,7 @@
 \acmYear{2027}
 \acmDOI{}
 \acmISBN{}
-\acmConference[SIGMOD '27]{ACM SIGMOD International Conference on Management of Data}{June 13--19, 2027}{Huntington Beach, CA, USA}
+\acmConference[Under Review]{Anonymous Data Management Conference Submission}{2027}{}
 \settopmatter{printacmref=true}
 
 \usepackage{amsmath}
@@ -70,6 +70,9 @@ Across a further 300-run scale campaign, Adaptive V2 improves from
 \(0.848\times\) static throughput at 100K records to \(0.926\times\) at 5M,
 but every paired 95\% interval remains below parity.  At 1M and 5M it performs
 no rebuilds, isolating recurring online overhead as the residual cost.
+Finally, a 525-run phase-length campaign finds 3.8--8.7\% zero-cost oracle
+headroom, yet neither paid Perfect V2 nor online Adaptive V2 reaches static
+parity for phases from 10K through 10M operations.
 
 We derive a simple break-even model showing that adaptation can win only when
 per-operation fanout benefit exceeds monitoring, metadata, and policy cost,
@@ -156,8 +159,9 @@ This paper makes five contributions.
   \item We isolate overheads through a clean ablation: static B-tree, static
   regions, monitoring, records metadata, monitor-plus-records, and full
   adaptation.
-  \item We report a negative result on YCSB-style workloads, shifting hot
-  regions, and a Wikipedia pageview trace.
+  \item We report a repeated, paired negative result across YCSB-style
+  workloads, shifting hot regions, a Wikipedia pageview trace, two platforms,
+  three index scales, and five workload phase lengths.
   \item We derive a break-even condition that explains when online fanout
   adaptation can and cannot win.
 \end{enumerate}
@@ -342,38 +346,13 @@ additional static baselines use fanouts 8, 16, 32, 128, and 256.
 
 \subsection{Concurrency Boundary for Preloaded Trees}
 
-The supported concurrent mode has an explicit precondition: all keys are
-loaded before worker threads begin, and no operation changes tree topology.
-Internal keys and child pointers are therefore immutable during the run.
-Point lookup traverses those immutable nodes, acquires the target leaf's
-version lock, reads its keys and value, and releases the lock.  Updates of
-existing values acquire the same leaf lock.  Algorithm~\ref{alg:preloaded-lookup}
-shows this restricted lookup path.
-
-\begin{algorithm}[t]
-\caption{Point lookup for a preloaded, topology-immutable tree}
-\label{alg:preloaded-lookup}
-\begin{algorithmic}[1]
-\Require Search key $k$
-\Ensure Found value or \textsc{NotFound}
-  \State $n \gets$ current root pointer
-  \While{$n$ is not a leaf}
-    \State $i \gets$ first slot with $k < n.\mathit{keys}[i]$
-    \State $n \gets n.\mathit{children}[i]$
-  \EndWhile
-  \State acquire $n.\mathit{versionLock}$
-  \State scan leaf $n$ and copy the matching value, if present
-  \State release $n.\mathit{versionLock}$
-  \State \Return copied value or \textsc{NotFound}
-\end{algorithmic}
-\end{algorithm}
-
-The same version word protects in-place updates.  A ThreadSanitizer diagnostic
-showed that the earlier optimistic traversal was not C++-memory-model safe
-during structural insertion: a version retry after reading ordinary keys or
-pointers cannot legalize the preceding race.  We therefore do not claim
-concurrent insert, split, merge, deletion, or adaptive replacement.  These
-operations require quiescence in the artifact.
+The supported concurrent mode preloads all keys and keeps topology immutable.
+Lookups traverse immutable internal nodes and synchronize with existing-value
+updates at the target leaf.  A ThreadSanitizer diagnostic found a genuine race
+in the separate structural-insert path, so we do not claim concurrent insert,
+split, merge, deletion, or adaptive replacement.  These operations require
+quiescence.  The supplementary material gives pseudocode and the exact safety
+boundary; concurrency is ancillary to the single-threaded adaptation result.
 
 \subsection{Monitoring}
 
@@ -533,6 +512,7 @@ and adaptation is considered every 5,000 accesses to a segment.
 \centering
 \caption{Principal experimental parameters.}
 \label{tab:parameters-main}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{ll}
 \toprule
 Parameter & Setting \\
@@ -541,6 +521,7 @@ Local compiler / platform & GCC 6.3.0 / Windows 11 \\
 Local machine & ASUS i5-12500H, 16 threads, 16 GiB \\
 Selected campaign & Kaggle Xeon, 4 vCPU, GCC 11.4.0 \\
 Scale campaign & Kaggle Xeon, 4 vCPU, GCC 11.4.0 \\
+Phase-length campaign & Kaggle EPYC 7B12, 4 vCPU, GCC 13.3.0 \\
 Default / candidate fanouts & 64 / 8--256 \\
 Segments / sampling & 8 / V1: 1/10; V2: 1/16--1/64 \\
 Adaptation interval & 5,000 accesses \\
@@ -551,8 +532,11 @@ Repeated trials & 5 \\
 Thread records / operations & 1M / 10M \\
 Sliding windows & $5\times1$M operations \\
 Scale records / operations & 100K--5M / 1M \\
+Phase study records / operations & 1M / 10M \\
+Phase lengths & 10K, 100K, 1M, 5M, 10M \\
 \bottomrule
 \end{tabular}
+}
 \end{table}
 
 \subsection{Compared Indexes and Oracles}
@@ -628,6 +612,15 @@ five seeds and ten repetitions yield 50 exact seed/repetition pairs.  Each run
 uses one million measured operations, a 95/5 read/update mix, sample rate 1/32,
 and the same eight-segment V2 implementation and six fanout candidates.
 
+\textbf{Phase-length break-even.}  A separate shifting-workload campaign
+holds the database at one million records and each run at ten million measured
+operations while varying phase length over 10K, 100K, 1M, 5M, and 10M.
+For each of five seeds, six Static-Regional fanouts provide a measured
+phase-aware zero-cost schedule.  Five repetitions of Static-Regional,
+Perfect-V2, and Adaptive-V2 then form 125 exact trios.  The resulting 150
+oracle-grid and 375 paid-decomposition runs use 95\% reads, 5\% updates,
+Zipf 0.99, hot fraction 0.05, and sample rate 1/32.
+
 \subsection{Measurement and Statistical Treatment}
 
 For each workload, the operation sequence is generated once from a fixed seed
@@ -662,6 +655,11 @@ platform and GCC 11.4.0.  The scale campaign also uses that Kaggle
 Xeon/Linux toolchain, but is analyzed as a separate 300-run cohort identified
 by machine fingerprint \texttt{f410f7064c081e00}; absolute throughput is not
 pooled with earlier campaigns.
+The phase-length campaign is a third isolated Kaggle cohort on an AMD EPYC
+7B12 host with GCC 13.3.0 and machine fingerprint
+\texttt{f0521629f96fce19}.  Its 125 trios use hierarchical paired-bootstrap
+intervals over seeds and repetitions; absolute throughput is again not pooled
+across machines.
 
 \section{Results}
 
@@ -1316,26 +1314,6 @@ The scale experiment sharpens this decomposition.  At 1M and 5M records,
 gap within the tested range, but the recurring term \(\mu\) remains large
 enough to prevent break-even even when measured restructuring cost vanishes.
 
-Figure~\ref{fig:benefit} compares measured headroom with measured penalty.  On
-YCSB-A, the adaptive penalty is approximately 0.048 \us/op; on YCSB-B and
-YCSB-C it is roughly 0.056 and 0.069 \us/op.  Current YCSB-A and YCSB-C have
-no positive static fanout headroom, while YCSB-B has about 0.009 \us/op.  On
-the shifting workload, the phase-oracle benefit and adaptive penalty are both
-about 0.017 \us/op before charging policy error or rebuild cost.  On the
-Wikipedia trace, the
-static fanout-selection benefit is only about 0.0003 \us/op, while the adaptive
-penalty is about 0.023 \us/op.
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_benefit_vs_penalty.pdf}
-  \caption{Measured oracle headroom versus adaptive penalty.  In every tested
-  case, the online cost is comparable to or larger than the available benefit.}
-  \Description{Bar chart comparing oracle benefit and adaptive penalty in
-  microseconds per operation.}
-  \label{fig:benefit}
-\end{figure}
-
 This model does not say that adaptation is impossible.  It says adaptation must
 be judged at the same time scale as the operation it improves.  For in-memory
 B-trees with sub-microsecond lookups, software monitoring and rebuild decisions
@@ -1345,168 +1323,103 @@ phases, the benefit term \(\Delta\) may become large enough to dominate.
 \section{Discussion}
 \label{sec:discussion}
 
-\subsection{Why This Negative Result Matters}
+\subsection{Interpretation}
 
-The adaptive variants fail despite multiple policies, cost-aware rebuild
-gates, and workloads designed to expose skew.  The failure is therefore not
-best understood as a single bad policy.  It is a cost/benefit mismatch.  The
-oracle rows show that choosing a better fanout can help.  The overhead rows
-show that observing and acting on that opportunity can cost more than the
-opportunity itself.
+Failure across multiple policies and cost-aware gates points to a cost/benefit
+mismatch rather than one poor controller: the oracles expose useful fanout
+choices, while the ablations show that observing and acting on them consumes
+the opportunity.  The break-even condition nevertheless leaves room for
+adaptation when I/O or remote-memory costs enlarge \(\Delta\), phases are long,
+monitoring is hardware-assisted, or decisions operate at index or partition
+granularity.
 
-\subsection{When Adaptation Might Work}
-
-The break-even condition suggests several scenarios where online fanout
-adaptation could still be viable.  First, disk-resident or remote-memory trees
-may have much larger fanout benefit because a height reduction can avoid
-expensive I/O.  Second, workloads with very long stable phases can amortize
-rebuild cost.  Third, hardware-assisted monitoring might reduce \(m\), although
-it would not remove metadata and rebuild cost.  Fourth, coarser adaptation at
-the granularity of entire indexes or partitions may be more practical than
-per-node or per-small-segment adaptation.
-
-\subsection{Practical Recommendation}
+\subsection{Practical and Design Implications}
 
 For in-memory indexes at this scale, static tuning and coarse regional layout
-are safer than online fine-grained fanout adaptation.  Practitioners should
-profile a representative workload and choose a static fanout or a small set of
-static regional fanouts.  Researchers proposing adaptive index structures
-should include oracle baselines and component ablations; otherwise it is
-difficult to tell whether the design captures real headroom or merely shifts
-costs.
-
-\subsection{Design Implications}
-
-The measurements suggest a hierarchy of increasingly expensive responses to
-workload change.  The first response should be an \emph{opportunity test}:
-sample two layouts offline or during a rare maintenance window and disable the
-controller when their confidence intervals and time-per-operation difference
-show no usable headroom.  The second response should be coarse partition-level
-tuning driven by an external phase signal, avoiding per-key heat metadata on
-the lookup path.  Only when that oracle gap is large should the system enable
-continuous monitoring and segment reconstruction.
-
-Three implementation changes follow directly from the ablation, and V2
-implements concrete versions of all three: it removes the shadow records map,
-uses a fixed-size sampled monitor, and bulk-loads replacements in sorted order.
-The selected-regime results show that these changes improve the design but do
-not guarantee a win: they reduce \(\mu\) and \(R\), yet the best V2 setting
-still reaches only \(0.881\)--\(0.931\times\) static throughput.  More elaborate
-immutable snapshots or post-snapshot update logs remain possible, but the
-oracle-headroom theorem still rules out any design whose recurring cost exceeds
-the available layout benefit.
+are safer.  Systems should first perform an \emph{opportunity test} over a few
+offline layouts and enable coarse, phase-driven tuning only when the measured
+gap pays for the controller.  V2 removes shadow records, bounds monitoring, and
+bulk-loads replacements, yet reaches only \(0.881\)--\(0.931\times\) static
+throughput in selected regimes.  Oracle baselines and component ablations are
+therefore necessary to distinguish opportunity from realizable gain.
 
 \subsection{Threats to Validity}
 
-\textbf{Platform and scale.}  Local experiments use an ASUS i5-12500H/Windows
-machine, while the selected and scale campaigns use a four-vCPU Kaggle
-Xeon/Linux instance and GCC 11.4.0.  We compare variants only within a machine
-and cohort.  Different cache sizes, NUMA placement, allocators, or storage
-media can change both static fanout ordering and the relative cost of metadata.
-The scale campaign extends the tested range to 5M in-memory integer keys, but
-does not establish asymptotic behavior or make a claim about billion-key or
-disk-resident indexes.  The smaller independent-platform replication contains
-only 15 pairs per scale; its wider intervals cross parity at 100K and 5M.
+\textbf{Platform and scale.}  Local experiments use Windows on an ASUS laptop
+with an Intel i5-12500H.  The selected and scale campaigns use a four-vCPU
+Kaggle Xeon host with GCC 11.4.0; the phase-length campaign uses a separate
+four-vCPU Kaggle EPYC host with GCC 13.3.0.  We compare variants only within a
+machine and cohort.  Different cache sizes, NUMA placement, allocators, or
+storage media can change both static fanout ordering and the relative cost of
+metadata.  The scale campaign extends the tested range to 5M in-memory integer
+keys, but does not establish asymptotic behavior or make a claim about
+billion-key or disk-resident indexes.  The smaller cross-platform replication
+contains only 15 pairs per scale; its wider intervals cross parity at 100K and
+5M.
 
 \textbf{Causal mechanism.}  We attribute costs to software components through
 controlled configuration ablations and elapsed time.  The node-footprint
 analysis motivates cache sensitivity but is not presented as direct evidence
 of a particular microarchitectural event.
 
-\textbf{Workload coverage and noise.}  YCSB and shifting workloads use fixed
-seeds and controlled operation sequences, improving paired comparability but
-covering only one skew parameter and a limited set of phase lengths.  Five
-trials leave broad intervals for several shifting rows; fixed benchmark order
-can also interact with frequency scaling and background activity.  We disclose
-these intervals and avoid claims based on small adjacent differences.  The
-Wikipedia data supplies a real popularity distribution, but mapping pageviews
-to point reads and updates does not reproduce a complete database workload.
+\textbf{Workload coverage and noise.}  Fixed seeds improve pairing but cover
+one skew parameter and a bounded phase range.  Some five-trial shifting rows
+have broad intervals, so we avoid claims from small adjacent differences.  The
+Wikipedia trace supplies real popularity skew, but its point-operation replay
+is not a complete database workload.
 
-\textbf{Implementation boundary.}  The segmented architecture is one concrete
-design, not a lower bound over every possible adaptive B-tree.  V1 uses a full
-shadow map and insertion-based rebuild; V2 removes that map, bounds its monitor,
-and bulk-loads from a sorted export.  V2 still performs a full-segment copy and
-uses a heuristic, uncalibrated cost gate.  Concurrent execution is restricted
-to a preloaded, topology-immutable tree with leaf-synchronized lookups and
-existing-value updates.  Concurrent structural mutation, adaptive replacement,
-and epoch reclamation are not implemented.  Earlier concurrency throughput
-results used a superseded optimistic value-read path and are not included as
-validated evidence.  The negative claim is therefore specific and testable: on
-these two implementation variants and these in-memory workloads, measured
-recurring cost exceeds or consumes the available oracle headroom.  The
-analytical condition identifies what a different design must improve to
-overturn the result.
+\textbf{Implementation boundary.}  This segmented design is not a lower bound
+for all adaptive B-trees.  V2 still copies a complete segment and uses a
+heuristic cost gate.  Concurrency validation covers only preloaded,
+topology-immutable trees with synchronized lookups and existing-value updates;
+structural mutation, adaptive replacement, and epoch reclamation are excluded.
+Thus our claim is specific: for these implementations and in-memory workloads,
+measured recurring cost consumes the available oracle headroom.
 
 \section{Related Work}
 
-B-trees and B+ trees are foundational ordered indexes
-\cite{bayer1972organization,comer1979ubiquitous,graefe2011modern}.  Prior
-cache-conscious designs optimize node layout, prefetching, and memory access
-patterns \cite{rao1999cache,rao2000making,chen2001fractal}.  Cache-oblivious
-trees study asymptotic transfer bounds without explicit cache parameters
-\cite{bender2000cache}.  Our work differs by testing online fanout changes and
-measuring the cost of making the decision at runtime.
+B-trees are foundational ordered indexes
+\cite{bayer1972organization,comer1979ubiquitous,graefe2011modern}.
+Cache-conscious and cache-oblivious designs optimize layout, prefetching, and
+memory transfers \cite{rao1999cache,rao2000making,chen2001fractal,bender2000cache},
+while FAST, Masstree, HOT, and Wormhole explore architecture-sensitive
+main-memory layouts \cite{kim2010fast,mao2012masstree,binna2018hot,wu2019wormhole}.
+Concurrent and persistent trees instead optimize synchronization, indirection,
+or recovery \cite{lehman1981efficient,graefe2010locking,sewall2011palm,
+levandoski2013bw,oukid2016fptree,arulraj2018bztree}.  We isolate the runtime cost
+of changing fanout online.
 
-Architecture-sensitive and main-memory indexes explore complementary layout
-and hardware trade-offs.  Examples include FAST, Masstree, HOT, and Wormhole
-\cite{kim2010fast,mao2012masstree,binna2018hot,wu2019wormhole}.  Concurrent and
-persistent B-tree variants such as the Bw-Tree, FPTree, and BzTree optimize
-indirection, synchronization, and recovery rather than online fanout selection
-\cite{levandoski2013bw,oukid2016fptree,arulraj2018bztree}.  The concurrency
-lineage also includes B-link trees, systematic locking analyses, and batched
-latch-free updates \cite{lehman1981efficient,graefe2010locking,sewall2011palm}.
+Workload-aware structures include splay trees, database cracking, adaptive
+merging, ART, and learned indexes
+\cite{sleator1985self,idreos2007database,idreos2011adaptive,leis2013adaptive,
+kraska2018case,ding2020alex,galakatos2019fiting}.  Robustness studies show that
+workload order and reorganization policy can dominate convergence
+\cite{halim2012stochastic,schuhknecht2013uncracked}; dynamic learned indexes and
+controlled benchmarks similarly motivate changing-distribution evaluation and
+strong static baselines
+\cite{ferragina2020pgm,kipf2020radixspline,tang2020xindex,wu2021lipp,
+marcus2020benchmark}.  None isolates paid online fanout selection as we do.
 
-Adaptive and workload-aware indexing has a long history.  Splay trees adjust
-to access patterns through rotations \cite{sleator1985self}.  Database
-cracking and adaptive merging progressively refine physical organization based
-on queries \cite{idreos2007database,idreos2011adaptive}.  ART changes node
-representation based on local key density \cite{leis2013adaptive}.  Learned
-indexes and learned variants adapt model structure or error bounds to data
-distributions \cite{kraska2018case,ding2020alex,galakatos2019fiting}.  These
-systems motivate our question, but they do not isolate online fanout adaptation
-costs in B-trees.
-
-Robustness studies of adaptive indexing show that workload order and
-reorganization policy can dominate convergence cost
-\cite{halim2012stochastic,schuhknecht2013uncracked}.  Dynamic and
-distribution-aware learned indexes provide further comparisons for adaptation
-under changing data and access patterns
-\cite{ferragina2020pgm,kipf2020radixspline,tang2020xindex,wu2021lipp}, while
-controlled index benchmarks emphasize strong traditional baselines and build
-costs \cite{marcus2020benchmark}.
-
-Self-tuning database systems select indexes, views, or configurations at much
-coarser time scales \cite{chaudhuri1998autoadmin,weikum2002selftuning,
-pavlo2017selfdriving,vanaken2017automatic}.  Our result is consistent with that
-design lesson:
-adaptation is easier to justify when the cost is amortized over many
-operations.  Fine-grained adaptation on a sub-microsecond access path is a much
-harsher setting.
+Self-tuning systems select indexes, views, or configurations at coarser time
+scales \cite{chaudhuri1998autoadmin,weikum2002selftuning,pavlo2017selfdriving,
+vanaken2017automatic}.  Their amortization horizon reinforces our finding that
+sub-microsecond access paths are a particularly harsh setting for adaptation.
 
 \section{Conclusion}
 
-We implemented adaptive B-tree fanout selection and expected skewed workloads
-to benefit.  The data instead supports a diagnostic negative result.  Static
-fanout choices and oracle phase-aware fanouts have measurable headroom, but the
-online path pays monitoring, metadata, policy, and rebuild costs that exceed
-the benefit on our in-memory workloads.  A separate 1,740-run campaign
-confirms this result across selected seeds and sampling rates: even when a
-zero-cost oracle improves throughput, every paired interval for the best
-cost-aware adaptive configuration remains below static parity.
-The 300-run scale campaign further shows that V2 approaches parity from
-\(0.848\times\) at 100K to \(0.926\times\) at 5M records, yet remains below
-static throughout this range even when no rebuilds occur at 1M and 5M.
-The 525-run phase-length campaign sharpens the mechanism: zero-cost oracle
-headroom remains 3.8--8.7\%, but Perfect V2 does not amortize paid replacement
-to parity through 10M operations per phase, and non-rebuilding Adaptive V2
-continues to pay recurring online costs.
+Our experiments support a diagnostic negative result: measurable phase-aware
+fanout headroom is consumed by monitoring, metadata, policy, and replacement.
+The 1,740-run selected-regime campaign keeps every paired interval for the best
+cost-aware configuration below static parity.  Across 100K--5M records, V2
+narrows from \(0.848\times\) to \(0.926\times\), but remains slower even with
+zero rebuilds at 1M and 5M.  Across 10K--10M-operation phases, zero-cost oracle
+headroom is 3.8--8.7\%, yet paid Perfect V2 never reaches parity and
+non-rebuilding Adaptive V2 retains recurring cost.
 
-The resulting lesson is constructive: adaptive index papers should measure
-oracle headroom and adaptation overhead together.  If the oracle cannot beat
-the baseline, no online method can win.  If it wins only slightly, software
-adaptation must be nearly free.  For the workloads tested here, fine-grained
-fanout adaptation is not yet a practical replacement for static tuning or
-coarse regional indexing.
+Adaptive-index evaluations should therefore report oracle opportunity and paid
+overhead together.  Within our tested systems, platforms, and ranges,
+fine-grained fanout adaptation does not replace static tuning or coarse regional
+indexing.
 
 \section*{Generative AI Disclosure}
 Large language models were used to assist with code scaffolding and
