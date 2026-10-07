@@ -89,6 +89,7 @@ desktop.ini
 *.orig
 tmp/
 .kaggle_*/
+.phase_length_audit_*/
 .screening_*/
 arxiv_*_pages/
 sigmod_submission_pages/

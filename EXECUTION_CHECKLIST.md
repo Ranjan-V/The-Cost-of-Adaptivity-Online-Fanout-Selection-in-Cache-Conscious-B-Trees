@@ -1,8 +1,9 @@
 # Manual execution checklist
 
-Status is per stage. Local V2 correctness and Kaggle dynamic screening/selected
-validation are complete. Modal overflow, final controlled laptop campaigns,
-and architecture replications remain pending. Stop after any
+Status is per stage. Local V2 correctness, Kaggle dynamic screening/selected
+validation, adaptive scale, the reduced independent laptop replication, and
+the phase-length campaign are complete and verified.
+Stop after any
 correctness failure or unexplained data mismatch.
 
 | Stage | Run manually | Expected output | Inspect / stop condition |
@@ -16,7 +17,9 @@ correctness failure or unexplained data mismatch.
 | F2 Modal overflow | `modal/modal_campaign.py`, two-job smoke before full map | distinct CSV/log/phase files in Volume v2 | CPU only; group by machine fingerprint; do not use for final microarchitectural timing. |
 | G local rigorous V1/V2 | Windows selected/phase/monitor scripts | paired raw CSVs/logs | Use 10-15 repetitions where practical, randomized order, stable power. Run phase-length regional oracle grid and derive its phase oracle before phase-length perfect variants. |
 | I Kaggle replication | notebook cells 10-13 | separate CPU-group raw CSVs | Do not pool distinct cloud CPU models. |
-| J scale | Windows/Kaggle scale scripts | 100K/1M/5M raw CSVs | Stop on swapping or memory pressure; 10M is optional and unscheduled. |
+| J scale | Completed Kaggle adaptive-scale campaign | 300 verified rows at 100K/1M/5M | Preserve the completed archives; do not rerun. |
+| J2 independent scale replication | Complete: Windows laptop cohort | 90 rows, 45 verified exact pairs, summary/figure/archive | Means are below parity; only the 1M paired CI excludes parity. |
+| J3 phase length | Complete: Kaggle CPU cohort | 525 rows, 125 exact decomposition trios, summary/figure/archives | Preserve evidence; no paid or online parity through tested 10M-operation phases. |
 | K analysis | `analysis/validate_pairs.py`, `aggregate.py`, `paired.py --output`, `oracle.py`, `phase_oracle.py`, plots | processed CSVs/PDFs | Examine CV, n, paired CI, checksum equality. |
 | L paper update | integrate measured tables/figures | revised manuscript | No result without raw output and reproducible provenance. |
 | M venue decision | `paper_upgrade/VLDB_VS_ICDE_DECISION_RULE.md` | decision memo | Decide only after data quality audit. |

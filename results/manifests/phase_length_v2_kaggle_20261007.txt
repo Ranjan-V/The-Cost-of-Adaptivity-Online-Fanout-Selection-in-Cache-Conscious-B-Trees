@@ -1,0 +1,36 @@
+Phase-length V2 Kaggle evidence manifest
+========================================
+
+Status: COMPLETE AND VERIFIED
+Date verified: 2026-10-07
+Machine fingerprint: f0521629f96fce19
+CPU: AMD EPYC 7B12
+Compiler: GCC 13.3.0
+Compiler flags: -std=c++11 -O3 -march=native -DNDEBUG
+Packaged base commit: 76a08ed4743fe90bf762e26ab8415993c5760502
+Row source fingerprint: fcc52a7d6e6685418f60
+
+phase_length_v2_results (1).zip
+SHA-256: f2efcdb23ccd2bceeeea424ebba45f8556d697e13ba56f5d0e1e01c60ff02623
+
+phase_length_v2_resume.zip
+SHA-256: 152a73792df2cf0cefb92b56c38b2c7e987e70576096f206aafbef936865f364
+
+Verified inventory:
+- 150 oracle-grid primary rows and 150 phase sidecars
+- 375 paid-decomposition primary rows and 375 phase sidecars
+- 525 logs
+- 125 exact Static-Regional/Perfect-V2/Adaptive-V2 trios
+- zero partial files, failure markers, log failure signatures, and misses
+- matched checksum and workload fingerprint within every trio
+- all 1,581 shared result files byte-identical between the two archives
+
+Versioned processed outputs:
+- results/processed/phase_length_v2_20261007/phase_length_v2_oracle.csv
+- results/processed/phase_length_v2_20261007/phase_length_v2_pairs.csv
+- results/processed/phase_length_v2_20261007/phase_length_v2_summary.csv
+- results/processed/phase_length_v2_20261007/phase_length_v2_verification.md
+- results/figures/phase_length_v2.pdf
+
+The ZIP archives are intentionally ignored by Git and must be retained in
+archival/release storage under the exact names and hashes above.

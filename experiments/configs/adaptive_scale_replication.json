@@ -1,0 +1,20 @@
+{
+  "family": "adaptive_scale_replication",
+  "workload_family": "zipf",
+  "records": [100000, 1000000, 5000000],
+  "operations": [1000000],
+  "zipf": [0.99],
+  "read_update": [[0.95, 0.05]],
+  "phase_length": [0],
+  "hot_fraction": [0.20],
+  "sample_rate": [32],
+  "seed": [11, 23, 37, 53, 71],
+  "variants": ["STATIC", "ADAPT-V2"],
+  "fanout": [64],
+  "repetitions": 3,
+  "warmup": 10000,
+  "segments": 8,
+  "adapt_interval": 5000,
+  "latency_sampling_rate": 128,
+  "candidate_fanouts": [8, 16, 32, 64, 128, 256]
+}

@@ -56,18 +56,19 @@ def git_commit(root):
         return "UNAVAILABLE_IN_SOURCE_ARCHIVE"
 
 
-def append_csv_provenance(path, provenance):
+def append_csv_provenance(path, provenance, require_single=True):
     """Append immutable campaign provenance before atomic publication."""
     with path.open(newline="", encoding="utf-8") as stream:
         reader = csv.DictReader(stream)
         rows = list(reader)
         fields = list(reader.fieldnames or [])
-    if len(rows) != 1:
+    if not rows or (require_single and len(rows) != 1):
         raise ValueError("expected exactly one result row before publication: " + str(path))
     for name, value in provenance.items():
         if name not in fields:
             fields.append(name)
-        rows[0][name] = value
+        for row in rows:
+            row[name] = value
     with path.open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=fields)
         writer.writeheader()
@@ -244,7 +245,7 @@ def main():
                     "latency_sampling_rate": spec.get("latency_sampling_rate", 128),
                 }
                 append_csv_provenance(partial, provenance)
-                append_csv_provenance(sidecar, provenance)
+                append_csv_provenance(sidecar, provenance, require_single=False)
                 sidecar.replace(Path(str(output) + ".phases.csv"))
                 partial.replace(output)
     print("planned runs:", run_count)

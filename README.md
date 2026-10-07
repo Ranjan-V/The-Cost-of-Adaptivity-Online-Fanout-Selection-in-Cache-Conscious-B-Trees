@@ -55,9 +55,11 @@ selected-regime campaign contains 1,740 runs; its archive provenance and
 processed summaries are recorded under `results/manifests/` and
 `results/processed/`.
 
-Broader Modal screening, the final controlled laptop campaign, hardware-counter
-analysis, and ARM/independent-x86 replication remain pending.  Prepared code is
-not evidence of a completed experiment.  Start with
+The 300-run adaptive-scale campaign, reduced 90-run independent Windows/laptop
+replication, and 525-run phase-length/break-even campaign are complete and
+verified.  The phase experiment observes no paid or online break-even through
+10M operations per phase despite 3.8--8.7% zero-cost oracle headroom.
+Prepared code is not evidence of a completed experiment. Start with
 [ARTIFACT_README.md](ARTIFACT_README.md),
 [EXECUTION_CHECKLIST.md](EXECUTION_CHECKLIST.md), and
 [docs/REPOSITORY_AUDIT.md](docs/REPOSITORY_AUDIT.md).

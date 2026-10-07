@@ -4,8 +4,8 @@ AUDIT_STATUS: SOURCE INSPECTION COMPLETE. VALIDATION_STATUS: PARTIAL. The
 1,080-row static opportunity, 1,620-row dynamic screening, and 1,740-row
 selected/oracle/Perfect Kaggle campaigns are complete. The 300 Perfect rows
 are verified and analyzed. Compiler/sanitizer validation and the 300-run
-adaptive-scale campaign are also complete; one independent-platform
-replication remains pending, followed by the phase-length/break-even campaign.
+adaptive-scale campaign, the 90-run independent Windows/laptop replication,
+and the 525-run phase-length/break-even campaign are also complete.
 Hardware counters and ARM are not required by the smallest remaining plan.
 
 ## Architecture
@@ -51,3 +51,14 @@ Hardware counters and ARM are not required by the smallest remaining plan.
   100K, 1M, and 5M records. It passed archive identity, failure/partial,
   workload-fingerprint, checksum, and miss checks and is included in the
   manuscript. Historical oracle rows remain explicitly unpaired context.
+
+- The independent Windows/laptop replication contains 45 exact pairs across
+  the same three scales, with zero failures, partials, and misses. Its mean
+  ratios remain below one, but only the 1M confidence interval excludes
+  parity; 100K and 5M are reported as inconclusive.
+
+- The phase-length campaign contains 150 oracle-grid rows and 375 paid rows,
+  forming 125 exact Static-Regional/Perfect-V2/Adaptive-V2 trios.  All have
+  zero misses and matched checksums/workload fingerprints.  Zero-cost oracle
+  ratios are 1.038--1.087, while Perfect V2 remains at 0.122--0.769 and
+  Adaptive V2 at 0.778--0.818 across tested 10K--10M-operation phases.

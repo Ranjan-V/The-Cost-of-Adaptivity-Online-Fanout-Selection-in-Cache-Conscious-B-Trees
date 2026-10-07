@@ -10,11 +10,13 @@ replacement are unsupported. The 1,080-run static opportunity campaign,
 1,620-run dynamic screening campaign, and 1,740-run selected/oracle/Perfect
 campaign are archived as `results.zip`, `results-2.zip`, and
 `results-now-2.zip`. The 300 Perfect rows have been identity-, fingerprint-,
-checksum-, miss-, pairing-, and rebuild-count-verified. Adaptive scale,
-compiler/sanitizer validation, and independent-platform replication remain
-RESULT_PENDING. Existing earlier paper CSVs remain separate legacy results.
+checksum-, miss-, pairing-, and rebuild-count-verified. Compiler/sanitizer
+validation, the 300-run adaptive-scale campaign, the 90-run independent
+Windows/laptop replication, and the 525-run phase-length/break-even campaign
+are complete and verified. Existing earlier paper CSVs remain separate legacy
+results.
 
-This C++11 artifact compares fixed-fanout trees, regional routing, the original segmented adaptive tree (V1), and a bounded-monitor/bulk-load design (V2). The controlled machine is Windows 11, i5-12500H, 16 GB RAM. Kaggle CPU is for broad sweeps and independent replication; GPU is unnecessary.
+This C++11 artifact compares fixed-fanout trees, regional routing, the original segmented adaptive tree (V1), and a bounded-monitor/bulk-load design (V2). The local replication machine is Windows 11, i5-12500H, 16 GB RAM. Kaggle CPU hosts the completed broad sweeps; GPU is unnecessary.
 
 Key directories: `include/` (index and monitors), `benchmarks/` (legacy and unified drivers), `tests/`, `experiments/configs/`, `analysis/`, `scripts/windows/`, `scripts/linux/`, `kaggle/`, `paper_upgrade/`, and `results/`. The precise protocol is in `LOCAL_WINDOWS_RUNBOOK.md`, `kaggle/KAGGLE_RUNBOOK.md`, and `EXECUTION_CHECKLIST.md`.
 

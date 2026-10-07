@@ -1,0 +1,20 @@
+{
+  "family": "phase_length_v2_oracle_grid",
+  "workload_family": "shifting",
+  "records": [1000000],
+  "operations": [10000000],
+  "phase_length": [10000, 100000, 1000000, 5000000, 10000000],
+  "hot_fraction": [0.05],
+  "zipf": [0.99],
+  "read_update": [[0.95, 0.05]],
+  "sample_rate": [32],
+  "seed": [11, 23, 37, 53, 71],
+  "variants": ["STATIC-REGIONAL"],
+  "fanout": [8, 16, 32, 64, 128, 256],
+  "repetitions": 1,
+  "warmup": 10000,
+  "segments": 8,
+  "adapt_interval": 5000,
+  "latency_sampling_rate": 128,
+  "candidate_fanouts": [8, 16, 32, 64, 128, 256]
+}

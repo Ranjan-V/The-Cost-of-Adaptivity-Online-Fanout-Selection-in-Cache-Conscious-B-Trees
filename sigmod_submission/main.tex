@@ -1057,6 +1057,65 @@ unpaired context, not as exact comparisons to this scale cohort.  These data
 establish persistence, not asymptotic behavior: they do not determine whether
 V2 could reach parity beyond 5M records or on another platform or workload.
 
+We also repeat the same three-scale comparison on the independent ASUS
+i5-12500H/Windows platform using five seeds and three repetitions (45 exact
+pairs).  Mean V2/static ratios are \(0.949\times\), \(0.925\times\), and
+\(0.990\times\) at 100K, 1M, and 5M records.  The paired 95\% intervals are
+[0.909, 1.033], [0.896, 0.967], and [0.932, 1.119], respectively.  Thus the
+1M replication independently confirms a significant loss, while 100K and 5M
+are inconclusive rather than wins.  Absolute rates are not pooled across the
+Windows laptop and Kaggle Xeon cohorts.
+
+\subsection{Phase Length and Break-Even}
+
+We next hold the database and measured work fixed at 1M records and 10M
+operations while varying phase length from 10K to 10M operations.  For each
+of five seeds, a six-fanout regional sweep constructs a measured phase-aware
+zero-cost oracle.  Five repetitions of Static-Regional, Perfect-V2, and
+Adaptive-V2 then form 125 exact trios.  All trios match on workload
+fingerprint and checksum and report zero misses.  Figure~\ref{fig:phase-length-v2}
+and Table~\ref{tab:phase-length-v2} report hierarchical paired-bootstrap
+intervals; the measured oracle schedule is treated as one seed-level
+observation rather than five independent repetitions.
+This campaign ran separately on a Kaggle AMD EPYC 7B12 host; we normalize
+only within exact trios and do not pool its absolute throughput with the
+earlier Kaggle Xeon or Windows cohorts.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/phase_length_v2.pdf}
+  \caption{Phase-length decomposition.  The zero-cost oracle exposes layout
+  opportunity at every tested phase length.  Paid Perfect V2 improves as
+  rebuilds become less frequent, but neither Perfect V2 nor Adaptive V2
+  reaches static parity through the tested 10M-operation phase.}
+  \Description{A line plot over phase lengths from ten thousand to ten
+  million operations.  The zero-cost oracle remains above parity.  Perfect
+  V2 rises from 0.122 to 0.769, while Adaptive V2 remains near 0.8.}
+  \label{fig:phase-length-v2}
+\end{figure}
+
+\input{tables/phase_length_v2.tex}
+
+The oracle ratios range from \(1.038\times\) to \(1.087\times\), and every
+oracle interval excludes parity.  Thus all five cohorts contain genuine
+fanout opportunity.  Perfect V2, which is given the measured target schedule
+but pays for physical replacement, rises from \(0.122\times\) at 10K to
+\(0.769\times\) at 10M as its mean rebuild count falls from 2,344 to eight.
+It nevertheless remains significantly below static at every tested length.
+This separates an operation-only layout advantage from the cost of realizing
+that layout.
+
+Adaptive V2 performs zero rebuilds in all five cohorts and remains between
+\(0.778\times\) and \(0.818\times\) static.  Its controller therefore protects
+against the catastrophic short-phase actuation cost, but recurring monitoring,
+routing, and decision work still prevents parity.  At 10M, the mean
+Perfect-minus-Adaptive difference is \(-0.012\) and its 95\% interval
+[-0.025, 0.001] includes zero: paid perfect detection has caught up with, but
+does not significantly exceed, conservative online control.  We observe no
+paid-actuation or online break-even within 10K--10M operations per phase.  We
+do not extrapolate this finite range to longer phases, other workloads, or
+other machines.
+
 \subsection{Cross-Workload Synthesis}
 
 Table~\ref{tab:synthesis} answers RQ1 and RQ2 in one view.  The opportunity
@@ -1346,7 +1405,8 @@ and cohort.  Different cache sizes, NUMA placement, allocators, or storage
 media can change both static fanout ordering and the relative cost of metadata.
 The scale campaign extends the tested range to 5M in-memory integer keys, but
 does not establish asymptotic behavior or make a claim about billion-key or
-disk-resident indexes.
+disk-resident indexes.  The smaller independent-platform replication contains
+only 15 pairs per scale; its wider intervals cross parity at 100K and 5M.
 
 \textbf{Causal mechanism.}  We attribute costs to software components through
 controlled configuration ablations and elapsed time.  The node-footprint
@@ -1436,6 +1496,10 @@ cost-aware adaptive configuration remains below static parity.
 The 300-run scale campaign further shows that V2 approaches parity from
 \(0.848\times\) at 100K to \(0.926\times\) at 5M records, yet remains below
 static throughout this range even when no rebuilds occur at 1M and 5M.
+The 525-run phase-length campaign sharpens the mechanism: zero-cost oracle
+headroom remains 3.8--8.7\%, but Perfect V2 does not amortize paid replacement
+to parity through 10M operations per phase, and non-rebuilding Adaptive V2
+continues to pay recurring online costs.
 
 The resulting lesson is constructive: adaptive index papers should measure
 oracle headroom and adaptation overhead together.  If the oracle cannot beat
