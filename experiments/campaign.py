@@ -34,9 +34,9 @@ def machine_fingerprint():
     return hashlib.sha256("|".join(details).encode()).hexdigest()[:16], details
 
 
-def source_fingerprint(root):
+def source_fingerprint(root, benchmark="benchmarks/benchmark_unified.cpp"):
     h = hashlib.sha256()
-    paths = [root / "benchmarks/benchmark_unified.cpp"] + sorted((root / "include").rglob("*.h"))
+    paths = [root / benchmark] + sorted((root / "include").rglob("*.h"))
     for path in paths:
         h.update(str(path.relative_to(root)).encode())
         h.update(path.read_bytes())
@@ -159,6 +159,8 @@ def main():
     parser.add_argument("--out-dir", required=True, type=Path)
     parser.add_argument("--ordering-seed", type=int, default=2027)
     parser.add_argument("--source-id", default="AUTO")
+    parser.add_argument("--source-file", default="benchmarks/benchmark_unified.cpp",
+                        help="Benchmark source included in AUTO source fingerprint")
     parser.add_argument("--phase-oracle-csv", type=Path,
                         help="Measured phase_oracle.py CSV for PERFECT variants")
     parser.add_argument("--execute", action="store_true", help="Explicitly run the campaign")
@@ -171,7 +173,7 @@ def main():
     if oracle_csv is not None and not oracle_csv.is_absolute():
         oracle_csv = Path(__file__).resolve().parents[1] / oracle_csv
     machine, details = machine_fingerprint()
-    source_id = source_fingerprint(Path(__file__).resolve().parents[1]) if args.source_id == "AUTO" else args.source_id
+    source_id = source_fingerprint(Path(__file__).resolve().parents[1], args.source_file) if args.source_id == "AUTO" else args.source_id
     repository_root = Path(__file__).resolve().parents[1]
     commit = git_commit(repository_root)
     root = args.out_dir / machine / spec["family"]

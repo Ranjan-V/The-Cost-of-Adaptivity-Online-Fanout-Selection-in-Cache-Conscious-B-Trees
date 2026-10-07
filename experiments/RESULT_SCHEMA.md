@@ -4,6 +4,13 @@ STATUS: PREPARED, NOT_RUN. Every executed run is intended to write one CSV and o
 
 The main CSV records identity, compiler/source fingerprint, machine group, workload parameters, wall-time throughput, sampled latency statistics, monitor/policy/rebuild counters, memory estimates, checksum, misses, and workload fingerprint. `mean_sample_latency_us` is the arithmetic mean of sampled operations, not an exact all-operation mean. `peak_rss_bytes` is OS process peak (Windows working set or Linux `ru_maxrss`), which is separate from internally approximated tree/monitor/shadow bytes. `shadow_bytes` is a lower-bound pair payload estimate and omits hash-table buckets. `temp_rebuild_bytes` currently counts the exported sorted vector's capacity and omits replacement-tree allocations. `monitor_work_ms` for V2 is a 1/128 sample-based estimate and should not be treated as a hardware counter.
 
+New ICDE-EAB preparation rows append `routing_events` and
+`rebuilds_suppressed`. The latter is nonzero only for the diagnostic
+`V2-CONTROLLER` variant when the unchanged gate accepts an action that the
+ablation deliberately prevents from executing. These counters are activity
+checks, not elapsed-time decompositions. Historical CSV schemas remain valid
+and must not be rewritten.
+
 `experiment_family` is the named campaign (for example, `dynamic_broad`), whereas the `--family` CLI input selects the generated workload (`zipf`, `uniform`, or `shifting`). These must not be interchanged during aggregation.
 
 An `UNSUPPORTED` field means unavailable, not zero. `invariant_status=NOT_CHECKED` means the timing run did not traverse and verify all B+ tree invariants; correctness tests must be run separately. `misses` should be zero for the prepared point-lookup workloads because all keys are preloaded. Matching `workload_fingerprint` proves the same operation stream; matching `checksum` is a necessary, not sufficient, semantic check.

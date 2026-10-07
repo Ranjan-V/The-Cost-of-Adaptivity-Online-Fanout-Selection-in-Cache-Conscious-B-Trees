@@ -1,0 +1,21 @@
+{
+  "family": "icde_positive_control_oracle_grid",
+  "selection_status": "CALIBRATION_PENDING_DO_NOT_RUN",
+  "workload_family": "shifting",
+  "records": ["REPLACE_FROM_CALIBRATION"],
+  "operations": [10000000],
+  "zipf": [0.8],
+  "read_update": [[0.95, 0.05]],
+  "phase_length": [1000000],
+  "hot_fraction": [0.01],
+  "sample_rate": [32],
+  "seed": [11, 23, 37, 53, 71],
+  "variants": ["STATIC-REGIONAL"],
+  "fanout": [8, 16, 32, 64, 128, 256],
+  "repetitions": 5,
+  "warmup": 10000,
+  "segments": 8,
+  "adapt_interval": 5000,
+  "latency_sampling_rate": 128,
+  "candidate_fanouts": [8, 16, 32, 64, 128, 256]
+}

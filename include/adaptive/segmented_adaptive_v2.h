@@ -20,13 +20,15 @@ class SegmentedAdaptiveV2 {
 public:
     struct Stats {
         size_t evaluations, maintained, hysteresis_skips, cooldown_skips, cost_skips;
+        size_t route_events, rebuilds_suppressed;
         size_t rebuilds, monitor_events, monitor_samples, monitor_bytes;
         double monitor_ms, rebuild_ms, max_rebuild_ms;
         size_t temp_rebuild_bytes;
         std::vector<std::pair<size_t, size_t> > transitions;
         std::vector<std::string> decision_history;
         Stats() : evaluations(0), maintained(0), hysteresis_skips(0), cooldown_skips(0),
-            cost_skips(0), rebuilds(0), monitor_events(0), monitor_samples(0),
+            cost_skips(0), route_events(0), rebuilds_suppressed(0),
+            rebuilds(0), monitor_events(0), monitor_samples(0),
             monitor_bytes(0), monitor_ms(0), rebuild_ms(0), max_rebuild_ms(0), temp_rebuild_bytes(0) {}
     };
     SegmentedAdaptiveV2(size_t segments, Key min_key, Key max_key, size_t fanout = 64,
@@ -34,7 +36,8 @@ public:
                         size_t min_fanout = 8, size_t max_fanout = 256,
                         const std::vector<size_t>& candidates = std::vector<size_t>())
         : min_(min_key), max_(max_key), interval_(interval), min_f_(min_fanout),
-          max_f_(max_fanout), candidates_(candidates), enabled_(true), global_access_(0) {
+          max_f_(max_fanout), candidates_(candidates), enabled_(true),
+          monitoring_enabled_(true), rebuild_enabled_(true), global_access_(0) {
         static_assert(std::is_arithmetic<Key>::value, "numeric keys required");
         if (!segments || max_key < min_key || fanout < 3 || min_fanout < 3 || max_fanout < min_fanout)
             throw std::invalid_argument("invalid segmented V2 configuration");
@@ -58,10 +61,12 @@ public:
     }
     ~SegmentedAdaptiveV2() { for (size_t i = 0; i < parts_.size(); ++i) delete parts_[i]; }
     void insert(const Key& key, const Value& value) {
+        ++stats_.route_events;
         Part& p = *parts_[segment_index(key)];
         observe(p, key); p.tree->insert(key, value); consider(p);
     }
     bool search(const Key& key, Value& value) {
+        ++stats_.route_events;
         Part& p = *parts_[segment_index(key)];
         observe(p, key); bool found = p.tree->search(key, value); consider(p); return found;
     }
@@ -94,6 +99,8 @@ public:
     }
     size_t fanout(size_t segment) const { return parts_.at(segment)->fanout; }
     void set_adaptation_enabled(bool yes) { enabled_ = yes; }
+    void set_monitoring_enabled(bool yes) { monitoring_enabled_ = yes; }
+    void set_rebuild_enabled(bool yes) { rebuild_enabled_ = yes; }
     void reset_measurement_state() {
         stats_ = Stats();
         for (size_t i = 0; i < parts_.size(); ++i) {
@@ -130,6 +137,7 @@ private:
         Part(const Part&); Part& operator=(const Part&);
     };
     void observe(Part& p, const Key& key) {
+        if (!monitoring_enabled_) return;
         typedef std::chrono::steady_clock Clock;
         ++p.accesses; ++global_access_;
         if ((p.accesses & 127u) == 0u) {
@@ -168,6 +176,11 @@ private:
         // These are heuristic scores, not calibrated nanoseconds.
         const double cost_score = count <= 1.0 ? 64.0 : 0.15 * count;
         if (benefit_score <= cost_score) { ++stats_.cost_skips; history(p, target, "cost"); return; }
+        if (!rebuild_enabled_) {
+            ++stats_.rebuilds_suppressed;
+            history(p, target, "rebuild_suppressed");
+            return;
+        }
         history(p, target, "rebuild");
         rebuild(p, target);
     }
@@ -209,7 +222,7 @@ private:
     Key min_, max_;
     size_t interval_, min_f_, max_f_;
     std::vector<size_t> candidates_;
-    bool enabled_;
+    bool enabled_, monitoring_enabled_, rebuild_enabled_;
     size_t global_access_;
     Stats stats_;
     SegmentedAdaptiveV2(const SegmentedAdaptiveV2&);

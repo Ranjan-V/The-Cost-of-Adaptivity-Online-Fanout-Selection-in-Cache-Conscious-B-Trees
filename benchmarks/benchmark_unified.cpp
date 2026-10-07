@@ -169,7 +169,7 @@ static std::vector<Op> workload(const Options& o, unsigned long long& fingerprin
 
 class Index {
 public:
-    explicit Index(const Options& o) : options_(o), shadow_() {
+    explicit Index(const Options& o) : options_(o), shadow_(), routing_events_(0) {
         if (o.variant == "STATIC+OLD-MONITOR")
             old_.reset(new cache_adaptive::AccessMonitor(10000, 0.1, 1, 0.99));
         if (o.variant.find("BOUNDED-MONITOR") != std::string::npos)
@@ -182,11 +182,15 @@ public:
             v1_.reset(new cache_adaptive::SegmentedAdaptiveBPlusTree<int, int>(
                 o.segments, 0, static_cast<int>(o.records - 1), o.fanout, o.adapt_interval, 8, 256, o.sample_rate));
             v1_->set_adaptation_enabled(false);
-        } else if (o.variant == "ADAPT-V2" || o.variant == "PERFECT-V2") {
+        } else if (o.variant == "ADAPT-V2" || o.variant == "PERFECT-V2" ||
+                   o.variant == "V2-DATAPATH" || o.variant == "V2-MONITOR" ||
+                   o.variant == "V2-CONTROLLER") {
             v2_.reset(new cabtree::SegmentedAdaptiveV2<int, int>(
                 o.segments, 0, static_cast<int>(o.records - 1), o.fanout, o.adapt_interval,
                 o.sample_rate, 8, 256, parse_candidate_fanouts(o.candidates)));
             v2_->set_adaptation_enabled(false);
+            v2_->set_monitoring_enabled(o.variant != "V2-DATAPATH");
+            v2_->set_rebuild_enabled(o.variant != "V2-CONTROLLER");
         } else if (o.variant == "STATIC" || o.variant == "STATIC+BOUNDED-MONITOR" ||
                    o.variant == "STATIC+OLD-MONITOR" || o.variant == "STATIC+OLD-SHADOW-RECORDS") {
             trees_.push_back(std::unique_ptr<Tree>(new Tree(static_cast<int>(o.fanout))));
@@ -201,10 +205,12 @@ public:
         if (v2_) v2_->reset_measurement_state();
         if (old_) old_->clear();
         if (bounded_) bounded_->reset();
+        routing_events_ = 0;
     }
     void start_measurement() {
         if (v1_) v1_->set_adaptation_enabled(options_.variant == "ADAPT-V1");
-        if (v2_) v2_->set_adaptation_enabled(options_.variant == "ADAPT-V2");
+        if (v2_) v2_->set_adaptation_enabled(options_.variant == "ADAPT-V2" ||
+                                               options_.variant == "V2-CONTROLLER");
     }
     void put(int k, int v) {
         if (v1_) v1_->insert(k, v);
@@ -292,11 +298,14 @@ public:
         v1_ ? v1_->get_stats().rebuilds_skipped_cooldown : 0; }
     size_t cost_skips() const { return v2_ ? v2_->stats().cost_skips :
         v1_ ? v1_->get_stats().rebuilds_skipped_cost : 0; }
+    size_t routing_events() const { return v2_ ? v2_->stats().route_events : routing_events_; }
+    size_t rebuilds_suppressed() const { return v2_ ? v2_->stats().rebuilds_suppressed : 0; }
     double monitor_ms() const { return v2_ ? v2_->stats().monitor_ms : 0.0; }
     double max_rebuild_ms() const { return v2_ ? v2_->stats().max_rebuild_ms :
         v1_ ? v1_->get_stats().max_rebuild_ms : 0.0; }
 private:
     size_t route(int key) const {
+        ++routing_events_;
         if (trees_.size() == 1) return 0;
         size_t s = static_cast<size_t>(key) * trees_.size() / options_.records;
         return std::min(s, trees_.size() - 1);
@@ -308,6 +317,7 @@ private:
     std::unique_ptr<cache_adaptive::AccessMonitor> old_;
     std::unique_ptr<cabtree::BoundedMonitor<int> > bounded_;
     std::unordered_map<int, int> shadow_;
+    mutable size_t routing_events_;
 };
 
 static std::vector<size_t> targets(const std::string& value) {
@@ -366,7 +376,7 @@ static void write_result(const Options& o, unsigned long long fingerprint, doubl
     if (exists.good()) throw std::runtime_error("output already exists; use unique per-run path");
     std::ofstream out(o.output.c_str());
     if (!out) throw std::runtime_error("cannot open result file");
-    out << "run_id,experiment_family,timestamp,source_id,variant,os,compiler,compiler_version,compiler_flags,cpu_model,logical_cpus,physical_cores,ram_bytes,machine,host_label,environment,seed,repetition,records,operations,zipf,reads,updates,hot_fraction,phase_length,sample_rate,segments,fanout,candidate_fanouts,threads,wall_seconds,throughput_ops_sec,mean_sample_latency_us,p50_us,p95_us,p99_us,sampled_latency_count,monitor_samples,monitor_events,monitor_bytes,monitor_work_ms,policy_evaluations,maintained,hysteresis_skips,cooldown_skips,cost_skips,rebuild_count,rebuild_total_ms,rebuild_max_ms,fanout_transitions,candidate_decision_history,peak_rss_bytes,tree_bytes,shadow_bytes,temp_rebuild_bytes,bytes_per_key,checksum,misses,workload_fingerprint,invariant_status\n";
+    out << "run_id,experiment_family,timestamp,source_id,variant,os,compiler,compiler_version,compiler_flags,cpu_model,logical_cpus,physical_cores,ram_bytes,machine,host_label,environment,seed,repetition,records,operations,zipf,reads,updates,hot_fraction,phase_length,sample_rate,segments,fanout,candidate_fanouts,threads,wall_seconds,throughput_ops_sec,mean_sample_latency_us,p50_us,p95_us,p99_us,sampled_latency_count,monitor_samples,monitor_events,monitor_bytes,monitor_work_ms,policy_evaluations,maintained,hysteresis_skips,cooldown_skips,cost_skips,routing_events,rebuilds_suppressed,rebuild_count,rebuild_total_ms,rebuild_max_ms,fanout_transitions,candidate_decision_history,peak_rss_bytes,tree_bytes,shadow_bytes,temp_rebuild_bytes,bytes_per_key,checksum,misses,workload_fingerprint,invariant_status\n";
     double sum = 0; for (size_t i = 0; i < latencies.size(); ++i) sum += latencies[i];
     out << o.run_id << ',' << o.experiment_family << ',' << std::time(NULL) << ',' << o.source_id << ','
         << o.variant << ',' << os_name() << ',' << compiler() << ',' << compiler_version() << ','
@@ -390,6 +400,7 @@ static void write_result(const Options& o, unsigned long long fingerprint, doubl
     }
     out << index.policy_evaluations() << ',' << index.maintained() << ','
         << index.hysteresis_skips() << ',' << index.cooldown_skips() << ',' << index.cost_skips() << ','
+        << index.routing_events() << ',' << index.rebuilds_suppressed() << ','
         << index.rebuilds() << ',';
     out << index.rebuild_ms() << ',' << index.max_rebuild_ms() << ',';
     out << index.transitions() << ',' << index.decision_history() << ',' << peak_rss_bytes() << ',';
