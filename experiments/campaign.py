@@ -206,7 +206,7 @@ def main():
                 run_id = hashlib.sha256(identity.encode()).hexdigest()[:24]
                 output = root / (run_id + ".csv")
                 partial = root / (run_id + ".partial.csv")
-                environment = "kaggle" if "kaggle" in args.out_dir.parts else "local"
+                environment = os.environ.get("CABTREE_ENVIRONMENT") or ("kaggle" if "kaggle" in args.out_dir.parts else "local")
                 cpu_model = details[-1] if sys.platform.startswith("linux") else (platform.processor() or "UNSUPPORTED")
                 cmd = command(args.binary, spec, p, variant, run_id, partial, machine,
                               source_id, repetition, cpu_model, environment, oracle_csv)
