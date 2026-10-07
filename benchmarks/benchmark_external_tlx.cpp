@@ -57,8 +57,8 @@ static Options parse(int argc, char** argv) {
         else if (k == "--reads") o.reads = std::strtod(v.c_str(), NULL);
         else if (k == "--updates") o.updates = std::strtod(v.c_str(), NULL);
         else if (k == "--hot-fraction") o.hot_fraction = std::strtod(v.c_str(), NULL);
-        else if (k == "--family" && v != "zipf") throw std::invalid_argument("external baseline supports zipf only");
-        else if (k == "--fanout" && v != "64") throw std::invalid_argument("external cohort fixes project fanout 64");
+        else if (k == "--family") { if (v != "zipf") throw std::invalid_argument("external baseline supports zipf only"); }
+        else if (k == "--fanout") { if (v != "64") throw std::invalid_argument("external cohort fixes project fanout 64"); }
         else if (k == "--phase-length" || k == "--sample-rate" || k == "--segments" ||
                  k == "--candidate-fanouts" || k == "--adapt-interval") { /* recorded by campaign metadata */ }
         else throw std::invalid_argument("unknown CLI option: " + k);
