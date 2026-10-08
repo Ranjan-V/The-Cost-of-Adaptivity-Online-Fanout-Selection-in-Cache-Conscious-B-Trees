@@ -2,7 +2,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 MODE="${1:-dry-run}"
-export CABTREE_CXXFLAGS='-std=c++11 -O3 -march=native -DNDEBUG'
+export CABTREE_CXXFLAGS='-std=c++11 -Wall -Wextra -Wpedantic -Werror -O3 -march=native -DNDEBUG'
 [[ -s "$ROOT/build/prepared/external_source_id.txt" ]] || { echo "Missing external source identity; run build_icde_eab.sh" >&2; exit 2; }
 SOURCE_ID="$(tr -d '[:space:]' < "$ROOT/build/prepared/external_source_id.txt")"
 args=(python3 "$ROOT/experiments/campaign.py"
