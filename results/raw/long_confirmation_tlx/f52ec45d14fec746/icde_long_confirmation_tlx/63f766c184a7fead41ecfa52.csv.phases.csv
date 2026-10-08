@@ -1,0 +1,2 @@
+run_id,variant,phase_index,phase_operations,phase_seconds,throughput_ops_sec,phase_fingerprint,git_commit,workload_family,adapt_interval,warmup,latency_sampling_rate
+63f766c184a7fead41ecfa52,STATIC,0,50000000,6.97367,7.16983e+06,1727890013277073751,0e446320b196c40064ce52c0712a04120d8a9225,zipf,5000,10000,128

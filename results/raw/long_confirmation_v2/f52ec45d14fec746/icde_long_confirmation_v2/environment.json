@@ -1,0 +1,71 @@
+{
+  "machine_fingerprint": "f52ec45d14fec746",
+  "machine_components": [
+    "Linux",
+    "x86_64",
+    "x86_64",
+    "2",
+    "Intel(R) Xeon(R) Platinum 8488C"
+  ],
+  "source_id": "8d49544ed0135e8ed827",
+  "compiler_flags": "-std=c++11 -Wall -Wextra -Wpedantic -Werror -O3 -march=native -DNDEBUG",
+  "ordering_seed": 2027,
+  "config": {
+    "family": "icde_long_confirmation_v2",
+    "workload_family": "zipf",
+    "records": [
+      1000000
+    ],
+    "operations": [
+      50000000
+    ],
+    "zipf": [
+      0.99
+    ],
+    "read_update": [
+      [
+        0.95,
+        0.05
+      ]
+    ],
+    "phase_length": [
+      0
+    ],
+    "hot_fraction": [
+      0.2
+    ],
+    "sample_rate": [
+      32
+    ],
+    "seed": [
+      11,
+      23,
+      37,
+      53,
+      71
+    ],
+    "variants": [
+      "STATIC",
+      "ADAPT-V2"
+    ],
+    "fanout": [
+      64
+    ],
+    "repetitions": 5,
+    "warmup": 10000,
+    "segments": 8,
+    "adapt_interval": 5000,
+    "latency_sampling_rate": 128,
+    "candidate_fanouts": [
+      8,
+      16,
+      32,
+      64,
+      128,
+      256
+    ]
+  },
+  "binary": "build/prepared/bench_unified",
+  "git_commit": "0e446320b196c40064ce52c0712a04120d8a9225",
+  "cpu_model": "Intel(R) Xeon(R) Platinum 8488C"
+}

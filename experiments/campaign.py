@@ -58,6 +58,7 @@ def git_commit(root):
 
 def append_csv_provenance(path, provenance, require_single=True):
     """Append immutable campaign provenance before atomic publication."""
+    csv.field_size_limit(sys.maxsize)
     with path.open(newline="", encoding="utf-8") as stream:
         reader = csv.DictReader(stream)
         rows = list(reader)

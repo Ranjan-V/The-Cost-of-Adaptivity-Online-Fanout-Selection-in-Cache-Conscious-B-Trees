@@ -1,0 +1,2 @@
+run_id,variant,phase_index,phase_operations,phase_seconds,throughput_ops_sec,phase_fingerprint,git_commit,workload_family,adapt_interval,warmup,latency_sampling_rate
+52fe0ef9fbeddc3b0aa32fe0,TLX-BTREE,0,50000000,7.22013,6.92508e+06,17174379489264708841,0e446320b196c40064ce52c0712a04120d8a9225,zipf,5000,10000,128
