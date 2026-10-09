@@ -1,0 +1,160 @@
+{
+  "audited_commit": "259bb6ddccda6d2fd48ea1d336db412839eb6e0f",
+  "archive_coverage": {
+    "positive_control": {
+      "archive": "icde_positive_control_calibration_e03b44d.tar.gz",
+      "sha256": "fe68d5cb7f7f0908cff12d538b6cf5b552cac9e18a21304bdbf755b2cda02b94",
+      "member_count": 111,
+      "primary_rows": 36,
+      "extracted_members_compared": 73,
+      "extracted_byte_mismatches": 0,
+      "git_commits": [
+        "e03b44dd17ec79aee405ee32b094dd3ca959d1a8"
+      ],
+      "machines": [
+        "f52ec45d14fec746"
+      ],
+      "compilers": [
+        "GCC 13.3.0"
+      ],
+      "zero_miss_rows": 36,
+      "wall_seconds": {
+        "minimum": 0.792795488,
+        "median": 1.009944252,
+        "maximum": 1.427896105,
+        "total": 36.384016112
+      }
+    },
+    "v2_ablation": {
+      "archive": "icde_v2_ablation_150_e03b44d.tar.gz",
+      "sha256": "8923397a1720b327e476d9277271ef6fc574829ea30ff7ba04f0692ec203db0b",
+      "member_count": 455,
+      "primary_rows": 150,
+      "extracted_members_compared": 301,
+      "extracted_byte_mismatches": 0,
+      "git_commits": [
+        "e03b44dd17ec79aee405ee32b094dd3ca959d1a8"
+      ],
+      "machines": [
+        "f52ec45d14fec746"
+      ],
+      "compilers": [
+        "GCC 13.3.0"
+      ],
+      "zero_miss_rows": 150,
+      "wall_seconds": {
+        "minimum": 0.150094459,
+        "median": 0.1730509725,
+        "maximum": 0.192341788,
+        "total": 25.68274590900001
+      }
+    },
+    "external_tlx": {
+      "archive": "icde_external_tlx_50_0e44632.tar.gz",
+      "sha256": "73de07e98059c452f68d7f62fdbdae731a17f55c179f2fecfac7d48444c108d8",
+      "member_count": 159,
+      "primary_rows": 50,
+      "extracted_members_compared": 101,
+      "extracted_byte_mismatches": 0,
+      "git_commits": [
+        "0e446320b196c40064ce52c0712a04120d8a9225"
+      ],
+      "machines": [
+        "f52ec45d14fec746"
+      ],
+      "compilers": [
+        " "
+      ],
+      "zero_miss_rows": 50,
+      "wall_seconds": {
+        "minimum": 0.132760846,
+        "median": 0.1440783725,
+        "maximum": 0.154975912,
+        "total": 7.203461388000001
+      }
+    },
+    "logging_pilot": {
+      "archive": "icde_logging_pilot_50m.tar.gz",
+      "sha256": "d3d3dbc876311f5ae73d99a0a128b0a089f73053ff06e13d855b8dfa5b0ed4cf",
+      "member_count": 30,
+      "primary_rows": 9,
+      "extracted_members_compared": 0,
+      "extracted_byte_mismatches": 0,
+      "git_commits": [
+        ""
+      ],
+      "machines": [
+        "UNSPECIFIED"
+      ],
+      "compilers": [
+        "GCC 13.3.0"
+      ],
+      "zero_miss_rows": 9,
+      "wall_seconds": {
+        "minimum": 0.01424625,
+        "median": 8.63128937,
+        "maximum": 8.891075147,
+        "total": 61.130496462
+      }
+    },
+    "long_confirmation": {
+      "archive": "icde_long_confirmation_100_0e44632.tar.gz",
+      "sha256": "d9d65d07adfdb5c52f4b1d80e4e1d2b2f2aee80b1159a65f55c95d887c7ca9a3",
+      "member_count": 327,
+      "primary_rows": 100,
+      "extracted_members_compared": 202,
+      "extracted_byte_mismatches": 0,
+      "git_commits": [
+        "0e446320b196c40064ce52c0712a04120d8a9225"
+      ],
+      "machines": [
+        "f52ec45d14fec746"
+      ],
+      "compilers": [
+        " ",
+        "GCC 13.3.0"
+      ],
+      "zero_miss_rows": 100,
+      "wall_seconds": {
+        "minimum": 6.803903586,
+        "median": 7.3619101905,
+        "maximum": 9.078640467,
+        "total": 761.5169470010002
+      }
+    },
+    "tlx_source": {
+      "archive": "icde_tlx_source_backup.tar.gz",
+      "sha256": "6b4a1cd639ccc8e127dc2447e001f13d6f1970ebdefe0653b6c6367edf1c8c13",
+      "member_count": 325,
+      "primary_rows": 0,
+      "extracted_members_compared": 0,
+      "extracted_byte_mismatches": 0,
+      "git_commits": [],
+      "machines": [],
+      "compilers": [],
+      "zero_miss_rows": 0
+    }
+  },
+  "cross_archive_duplicate_run_ids": 0,
+  "positive_control": {
+    "selection_rule": "maximum mean best-static/f64 across frozen record counts",
+    "eligibility_rule": "mean headroom >= 1.10 and no correctness failure",
+    "scores": [
+      {
+        "records": 1000000,
+        "mean": 1.0402782559219907,
+        "median": 1.0419746379422696,
+        "ci_low": 1.0289233685791686,
+        "ci_high": 1.049936761244534
+      },
+      {
+        "records": 5000000,
+        "mean": 1.0,
+        "median": 1.0,
+        "ci_low": 1.0,
+        "ci_high": 1.0
+      }
+    ],
+    "status": "NO_CREDIBLE_HIGH_HEADROOM_CONTROL"
+  }
+}

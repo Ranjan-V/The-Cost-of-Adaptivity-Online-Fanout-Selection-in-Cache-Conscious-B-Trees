@@ -1,0 +1,100 @@
+{
+  "analyzed_repository_commit": "259bb6ddccda6d2fd48ea1d336db412839eb6e0f",
+  "logging_sensitivity": {
+    "interpretation": "exploratory sensitivity check; n=3 matched pairs",
+    "mean_off_over_on": 1.0050950548843154,
+    "median_off_over_on": 1.0107533301303624,
+    "pair_ratios": [
+      0.9822031423737652,
+      1.0107533301303624,
+      1.0223286921488184
+    ],
+    "pairs": 3
+  },
+  "long_tlx": {
+    "ci95_high": 0.9752041129562142,
+    "ci95_low": 0.9615789187265195,
+    "delta_us_per_op": {
+      "ci95_high": 0.005570969429599979,
+      "ci95_low": 0.003574798490400025,
+      "mean": 0.0046331502504,
+      "median": 0.00486487507999997,
+      "n_pairs": 25,
+      "n_seeds": 5
+    },
+    "mean": 0.9679551759776797,
+    "median": 0.9660607785407571,
+    "median_wall_seconds": {
+      "STATIC": 6.967872142,
+      "TLX-BTREE": 7.197122431
+    },
+    "n_pairs": 25,
+    "n_seeds": 5,
+    "relative_difference_percent": -3.204482402232034
+  },
+  "long_tlx_provenance": {
+    "compiler_flags": "-std=c++11 -Wall -Wextra -Wpedantic -Werror -O3 -march=native -DNDEBUG",
+    "environment": "aws_ec2",
+    "git_commit": "0e446320b196c40064ce52c0712a04120d8a9225",
+    "machine": "f52ec45d14fec746",
+    "operations": "50000000",
+    "records": "1000000",
+    "rows": 50
+  },
+  "long_v2": {
+    "ci95_high": 0.8781895996347631,
+    "ci95_low": 0.8613859907242798,
+    "delta_us_per_op": {
+      "ci95_high": 0.02425666886880002,
+      "ci95_low": 0.021171718887199962,
+      "mean": 0.022879083169600016,
+      "median": 0.023516554900000236,
+      "n_pairs": 25,
+      "n_seeds": 5
+    },
+    "mean": 0.8688088400926071,
+    "median": 0.8662002365264257,
+    "median_wall_seconds": {
+      "ADAPT-V2": 8.693019851,
+      "STATIC": 7.558213541
+    },
+    "n_pairs": 25,
+    "n_seeds": 5,
+    "relative_difference_percent": -13.119115990739294,
+    "total_cost_skips": 3330,
+    "total_policy_evaluations": 249905,
+    "total_rebuilds": 0
+  },
+  "long_v2_provenance": {
+    "compiler_flags": "-std=c++11 -Wall -Wextra -Wpedantic -Werror -O3 -march=native -DNDEBUG",
+    "environment": "aws_ec2",
+    "git_commit": "0e446320b196c40064ce52c0712a04120d8a9225",
+    "machine": "f52ec45d14fec746",
+    "operations": "50000000",
+    "records": "1000000",
+    "rows": 50
+  },
+  "positive_control": {
+    "eligibility_rule": "mean headroom >= 1.10 and no correctness failure",
+    "raw_archive_available": true,
+    "raw_rows_independently_verified": 36,
+    "scores": [
+      {
+        "ci_high": 1.049936761244534,
+        "ci_low": 1.0289233685791686,
+        "mean": 1.0402782559219907,
+        "median": 1.0419746379422696,
+        "records": 1000000
+      },
+      {
+        "ci_high": 1.0,
+        "ci_low": 1.0,
+        "mean": 1.0,
+        "median": 1.0,
+        "records": 5000000
+      }
+    ],
+    "selection_rule": "maximum mean best-static/f64 across frozen record counts",
+    "status": "NO_CREDIBLE_HIGH_HEADROOM_CONTROL"
+  }
+}

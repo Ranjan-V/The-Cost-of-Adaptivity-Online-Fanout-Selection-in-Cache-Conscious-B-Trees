@@ -1,0 +1,21 @@
+{
+  "selection_rule": "maximum mean best-static/f64 across the two frozen record counts",
+  "eligibility_rule": "mean headroom >= 1.10 and no correctness failure",
+  "scores": [
+    {
+      "records": 1000000,
+      "mean": 1.0402782559219907,
+      "median": 1.0419746379422696,
+      "ci_low": 1.0289233685791686,
+      "ci_high": 1.049936761244534
+    },
+    {
+      "records": 5000000,
+      "mean": 1.0,
+      "median": 1.0,
+      "ci_low": 1.0,
+      "ci_high": 1.0
+    }
+  ],
+  "status": "NO_CREDIBLE_HIGH_HEADROOM_CONTROL"
+}
